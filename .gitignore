@@ -1,0 +1,29 @@
+# Environments
+.venv/
+venv/
+env/
+node_modules/
+__pycache__/
+*.pyc
+
+# IDEs
+.idea/
+.vscode/
+.DS_Store
+
+# Mobile
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.dart_tool/
+mobile/pubspec.lock
+
+# Backend
+backend/logs/
+backend/node_modules/
+.env
+backend/.env
+
+# Temporary files
+*.log
+tmp/

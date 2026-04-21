@@ -1,0 +1,20 @@
+[
+  {
+    "id": "PHASE3-FIX-001",
+    "bug_id": "PHASE3-001",
+    "title": "Use in-memory MongoDB for development",
+    "description": "Modified database connection logic to use mongodb-memory-server when USE_IN_MEMORY_DB=true in environment, eliminating the need for real MongoDB with credentials.",
+    "files_modified": [
+      "backend/src/db.js",
+      "backend/src/config.js",
+      "backend/.env"
+    ],
+    "changes": {
+      "db.js": "Added conditional logic to use MongoMemoryServer when useInMemoryDb flag is true; added detailed logging of MongoDB connection info.",
+      "config.js": "Added useInMemoryDb configuration from USE_IN_MEMORY_DB environment variable.",
+      ".env": "Set USE_IN_MEMORY_DB=true to enable in-memory database for development."
+    },
+    "result": "Auth endpoints now functional: register (201) and login (200) return valid JWT tokens.",
+    "tested": true
+  }
+]

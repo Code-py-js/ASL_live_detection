@@ -1,0 +1,9 @@
+[
+  {
+    "issue_id": "PHASE2-001",
+    "description": "TensorFlow incompatible with Python 3.14; requires Python <=3.11.",
+    "correction": "Using Python 3.11, create a virtualenv in ml/ (`py -3.11 -m venv .venv`), activate it, and run 'pip install mediapipe tensorflow opencv-python numpy matplotlib'.",
+    "status": "applied",
+    "phase": 2
+  }
+]

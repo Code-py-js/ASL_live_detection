@@ -1,0 +1,101 @@
+{
+  "phase": 2,
+  "title": "ML Inference Pipeline Prototype - Execution Plan",
+  "overview": "Develop ML pipeline with MediaPipe, TensorFlow, Kaggle data, TTS.",
+  "prerequisites": [
+    "Python 3.8+ installed with pip.",
+    "TensorFlow and MediaPipe installed.",
+    "Kaggle API key for dataset download.",
+    "Git and basic ML tools."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "description": "Set up ml/ folder structure.",
+      "actions": [
+        "Create: ml/data, ml/models, ml/scripts"
+      ],
+      "validation": "Folders created.",
+      "error_handling": "Check permissions; use mkdir -p."
+    },
+    {
+      "step": 2,
+      "description": "Integrate MediaPipe for keypoints.",
+      "actions": [
+        "Install mediapipe, create script to extract keypoints from images."
+      ],
+      "validation": "Keypoints extracted accurately.",
+      "error_handling": "Install dependencies; debug with sample images."
+    },
+    {
+      "step": 3,
+      "description": "Prepare Kaggle ASL dataset.",
+      "actions": [
+        "Download dataset, preprocess (resize, normalize)."
+      ],
+      "validation": "Data ready for training.",
+      "error_handling": "Set Kaggle API; handle download errors."
+    },
+    {
+      "step": 4,
+      "description": "Train TensorFlow model.",
+      "actions": [
+        "Build Keras model, train on dataset, convert to TFLite."
+      ],
+      "validation": "Model achieves >80% accuracy.",
+      "error_handling": "Tune hyperparameters; check for overfitting."
+    },
+    {
+      "step": 5,
+      "description": "Implement TTS.",
+      "actions": [
+        "Integrate TTS library for text-to-audio."
+      ],
+      "validation": "Audio generated correctly.",
+      "error_handling": "Test with sample text; resolve library issues."
+    },
+    {
+      "step": 6,
+      "description": "Create prototype script.",
+      "actions": [
+        "Script: input video -> keypoints -> inference -> text -> audio."
+      ],
+      "validation": "End-to-end runs.",
+      "error_handling": "Debug pipeline steps; ensure data flow."
+    },
+    {
+      "step": 7,
+      "description": "Benchmark performance.",
+      "actions": [
+        "Test FPS, document results."
+      ],
+      "validation": "Meets 60 FPS target.",
+      "error_handling": "Optimize model; use profiling tools."
+    },
+    {
+      "step": 8,
+      "description": "Evaluate audit report and create corrections.json.",
+      "actions": [
+        "Read audits/phase-2/audit-report.md.",
+        "Identify potential issues from findings.",
+        "Create audits/phase-2/corrections.json with fixes for each issue."
+      ],
+      "validation": "corrections.json created with actionable fixes.",
+      "error_handling": "If no issues, create empty array; ensure JSON syntax."
+    }
+  ],
+  "bug_logging": "Log to audits/phase-2/bugs.json.",
+  "completion": "Write audit report to audits/phase-2/audit-report.md.",
+  "corrections_format": {
+    "file_path": "audits/phase-2/corrections.json",
+    "structure": [
+      {
+        "issue_id": "string (matches bug id or finding)",
+        "description": "string (issue summary)",
+        "correction": "string (step-by-step fix)",
+        "status": "pending|applied",
+        "phase": 2
+      }
+    ]
+  }
+}

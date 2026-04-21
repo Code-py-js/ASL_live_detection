@@ -1,0 +1,51 @@
+{
+  "phase": 4,
+  "title": "Integration & End-to-End Prototype",
+  "goal": "Integrate mobile frontend, ML pipeline, and backend API into a full end-to-end ASL translation prototype, supporting sign-to-text/audio and vice versa, with seamless UI/UX and offline capabilities.",
+  "scope": [
+    "Integrate ML inference (TFLite + MediaPipe) into Flutter app for real-time ASL sign detection.",
+    "Connect Flutter app to backend API for user auth, syncing translations, and TTS audio playback.",
+    "Implement bidirectional translation: sign-to-text/subtitles/audio, and text-to-sign hints (if model supports).",
+    "Add UI feedback: animations for detection results, audio playback controls, responsive display of translations.",
+    "Ensure offline-first: ML runs locally, with optional backend sync for advanced features.",
+    "Handle errors gracefully: network failures, model inaccuracies, with user-friendly messages and fallbacks.",
+    "Test full user flow: onboard user, capture signs, display/output translations."
+  ],
+  "deliverables": [
+    "Integrated Flutter app with ML plugins (tflite, camera, mediapipe) and backend HTTP client.",
+    "End-to-end demo: user logs in, captures ASL signs via camera, sees text subtitles and hears audio output.",
+    "Backend integration for storing user translations and syncing across devices.",
+    "UI enhancements: smooth transitions for results, chic animations, accessibility features.",
+    "Documentation of integration points, API contracts, and offline behavior.",
+    "Audit report and bug log for this phase."
+  ],
+  "examples": {
+    "flutter_ml_integration": "import 'package:tflite/tflite.dart'; await Tflite.loadModel(model: 'assets/model.tflite'); var output = await Tflite.runModelOnFrame(bytesList: imageBytes);",
+    "backend_client": "final response = await http.post(Uri.parse('http://localhost:3000/api/translations'), headers: {'Authorization': 'Bearer $token'}, body: jsonEncode({'signData': keypoints}));",
+    "data_contracts": {
+      "ml_to_backend": "{ 'keypoints': [array of floats], 'confidence': 0.95 }",
+      "backend_to_ui": "{ 'text': 'Hello', 'audioUrl': 'http://...' }"
+    },
+    "offline_sync": "Use sqflite for local storage; sync on network available."
+  },
+  "audit": {
+    "must_verify": [
+      "Full user flow works: sign detection -> text/audio output, with accurate translations.",
+      "Bidirectional support is functional (at least basic text-to-sign hints).",
+      "App remains responsive with ML inference running in real-time.",
+      "Backend sync works when online; app functions offline for core features.",
+      "UI/UX is polished: resting colors, animations, responsive layout maintained.",
+      "Integration bugs (e.g., data format mismatches) are identified and mitigated.",
+      "corrections.json is created with fixes for any identified issues."
+    ],
+    "audit_report_path": "audits/phase-4/audit-report.md",
+    "bug_log_path": "audits/phase-4/bugs.json"
+  },
+  "bug_log_format": {
+    "id": "string",
+    "description": "string",
+    "severity": "low|med|high",
+    "status": "open|resolved",
+    "phase": 4
+  }
+}

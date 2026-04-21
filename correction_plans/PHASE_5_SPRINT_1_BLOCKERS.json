@@ -1,0 +1,251 @@
+[
+  {
+    "issue_id": "FRONTEND-001",
+    "category": "Critical Blocker",
+    "severity": "🔴 CRITICAL",
+    "title": "Flutter App Not Connected to Backend",
+    "description": "Flutter frontend must establish HTTP connections to backend API at /api/v1/* endpoints. Without this integration, Phase 5 testing cannot proceed.",
+    "blocking_items": [
+      "Cannot run end-to-end tests",
+      "Cannot verify UI flows",
+      "Cannot test authentication",
+      "Cannot test translation features"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Locate Flutter Project Structure",
+        "details": "Verify mobile/ folder contains Flutter project with pubspec.yaml, lib/, test/ directories"
+      },
+      {
+        "step": 2,
+        "task": "Add HTTP Client Dependency",
+        "details": "Update pubspec.yaml: add 'http: ^1.1.0' or 'dio: ^5.3.0' for HTTP requests. Run 'flutter pub get'"
+      },
+      {
+        "step": 3,
+        "task": "Create API Service Class",
+        "details": "Create lib/services/api_service.dart with methods for: register(), login(), createTranslation(), getTranslations(). Base URL: http://localhost:4000/api/v1/ (dev) or production URL"
+      },
+      {
+        "step": 4,
+        "task": "Implement Authentication Flow",
+        "details": "1) POST /api/v1/auth/register with {email, password}. 2) POST /api/v1/auth/login with {email, password}. 3) Store JWT token in secure storage (flutter_secure_storage). 4) Include Bearer token in all subsequent requests: Authorization: Bearer {token}"
+      },
+      {
+        "step": 5,
+        "task": "Implement Translation Endpoints",
+        "details": "1) POST /api/v1/translations with {signText, confidence, translatedText}. 2) GET /api/v1/translations with pagination (page, limit). 3) Handle pagination: parse response with total_pages, current_page. 4) Format requests with Content-Type: application/json"
+      },
+      {
+        "step": 6,
+        "task": "Add Error Handling",
+        "details": "Catch and handle error responses: { code: 'ERROR_TYPE', message: string, timestamp: ISO-8601 }. Specific handling: 400=validation error, 401=auth error (redirect to login), 500=server error (show user message)"
+      },
+      {
+        "step": 7,
+        "task": "Verify Connectivity",
+        "details": "Test endpoints with: 1) Health check: GET /api/v1/health. 2) Successful registration. 3) Successful login and token storage. 4) POST translation with valid token. 5) GET translations list."
+      }
+    ],
+    "validation": "All Flutter API calls return 2xx responses; tokens persist across app restarts; JWT refresh works on 401",
+    "error_handling": "If connection fails: verify backend running on localhost:4000; check CORS allowed origins; inspect network logs in Flutter DevTools",
+    "dependencies": ["Backend running on http://localhost:4000", "Flutter SDK >=3.0", "HTTP client library"],
+    "estimated_hours": 8,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "lib/services/api_service.dart (complete with all endpoints)",
+      "lib/models/user.dart (User, AuthResponse models)",
+      "lib/models/translation.dart (Translation model)",
+      "Network connectivity test passing"
+    ]
+  },
+  {
+    "issue_id": "ML-001",
+    "category": "Critical Blocker",
+    "severity": "🔴 CRITICAL",
+    "title": "ML Model Not Connected to Backend",
+    "description": "TensorFlow Lite model inference results must be sent to backend for storage. Without this integration, ML-backend feedback loop cannot be tested.",
+    "blocking_items": [
+      "Cannot verify ML accuracy metrics",
+      "Cannot test end-to-end sign language workflow",
+      "Cannot store inference results",
+      "Cannot track model performance"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Verify TensorFlow Lite Model Setup",
+        "details": "Check ml/ folder for model file (model.tflite or equivalent); verify ml/ has model loading scripts; ensure model accepts video/image input and outputs class predictions"
+      },
+      {
+        "step": 2,
+        "task": "Create ML Service in Flutter",
+        "details": "Create lib/services/ml_service.dart that: 1) Loads TensorFlow Lite model using tflite_flutter package. 2) Processes camera frames. 3) Returns predictions with confidence scores (0-1). 4) Handles model errors gracefully"
+      },
+      {
+        "step": 3,
+        "task": "Integrate Inference with Translation Service",
+        "details": "On each inference result: 1) Get predicted sign class. 2) Get confidence score. 3) Determine translation text from class. 4) Call api_service.createTranslation(signText, confidence, translation). 5) Update UI with result"
+      },
+      {
+        "step": 4,
+        "task": "Add Confidence Threshold",
+        "details": "Only send to backend if confidence > 0.7 (configurable). Log rejected low-confidence predictions. This prevents backend from storing poor quality results."
+      },
+      {
+        "step": 5,
+        "task": "Implement Result Validation",
+        "details": "Before sending to backend, validate: 1) signText non-empty. 2) confidence in range [0, 1]. 3) translatedText non-empty. 4) User authenticated (has valid token)"
+      },
+      {
+        "step": 6,
+        "task": "Add Error Recovery",
+        "details": "If backend POST fails: 1) Log error with details. 2) Retry up to 3 times with exponential backoff. 3) Show user offline indicator. 4) Queue failed translations for retry when online"
+      },
+      {
+        "step": 7,
+        "task": "Test End-to-End Flow",
+        "details": "1) Start app, login. 2) Point camera at sign language. 3) Get inference result. 4) Verify POST to /api/v1/translations succeeds. 5) Verify result appears in GET /api/v1/translations list. 6) Check backend logs for stored data"
+      }
+    ],
+    "validation": "ML inference results successfully posted to /api/v1/translations; translations persistent in backend; confidence scores stored correctly",
+    "error_handling": "If ML model fails to load: verify model file location; check tflite_flutter package version compatibility. If API POST fails: check network connectivity; verify authentication token valid",
+    "dependencies": ["TensorFlow Lite model file", "tflite_flutter package", "Backend API functional", "Camera permissions"],
+    "estimated_hours": 10,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "lib/services/ml_service.dart (complete implementation)",
+      "lib/models/inference_result.dart (model classes)",
+      "Integration test verifying ML→Backend flow",
+      "Offline translation queue (optional)"
+    ]
+  },
+  {
+    "issue_id": "CONFIG-001",
+    "category": "Critical Blocker",
+    "severity": "🟠 HIGH",
+    "title": "Rate Limiting Blocks Testing",
+    "description": "Current rate limiting (5 requests/15min for auth, 10/hour for register) blocks integration testing. Need to temporarily reduce limits for testing.",
+    "blocking_items": [
+      "Testing hits rate limit errors (429)",
+      "Cannot perform comprehensive test scenarios",
+      "Retesting requires 15-minute waits",
+      "CI/CD pipeline will fail on rate limits"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Create Test Configuration File",
+        "details": "Create backend/.env.test with relaxed rate limits: API_RATE_LIMIT_MAX_REQUESTS=10000, API_RATE_LIMIT_WINDOW_MS=60000 (1 min). This allows unlimited testing"
+      },
+      {
+        "step": 2,
+        "task": "Add Environment-Based Rate Limiting",
+        "details": "Update backend/src/middleware/security.js to check NODE_ENV: if NODE_ENV=test, use high thresholds; if NODE_ENV=production, use strict limits from .env"
+      },
+      {
+        "step": 3,
+        "task": "Configure Test Runner",
+        "details": "Create jest.config.js setupEnv to set NODE_ENV=test before tests run. Update package.json scripts: 'test': 'NODE_ENV=test jest', 'test:dev': 'NODE_ENV=development node scripts/test_*.js'"
+      },
+      {
+        "step": 4,
+        "task": "Update Integration Test Scripts",
+        "details": "Add NODE_ENV=test to all test scripts in backend/scripts/test_*.js. Add comment: '# Run with npm test for rate-limited testing' or use .env.test automatically"
+      },
+      {
+        "step": 5,
+        "task": "Document Configuration",
+        "details": "Update README: 'Development mode: NODE_ENV=development uses loose limits. Test mode: NODE_ENV=test has no rate limiting. Production mode: strict limits enforced'"
+      },
+      {
+        "step": 6,
+        "task": "Verify Configuration",
+        "details": "1) Start backend with NODE_ENV=test. 2) Run test scripts; confirm no 429 errors. 3) Verify production config still enforces rate limits when NODE_ENV=production"
+      }
+    ],
+    "validation": "Test execution completes without 429 rate limit errors; production environment still enforces strict limits",
+    "error_handling": "If tests still hit rate limits: increase thresholds further; check for running test instances; verify NODE_ENV variable set correctly",
+    "dependencies": ["Node.js environment variables", "backend/src/middleware/security.js updated"],
+    "estimated_hours": 2,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "backend/.env.test (relaxed rate limits)",
+      "Updated backend/src/middleware/security.js",
+      "Updated package.json test scripts",
+      "Test execution without rate limit errors"
+    ]
+  },
+  {
+    "issue_id": "DB-001",
+    "category": "Critical Blocker",
+    "severity": "🟠 HIGH",
+    "title": "Database Configuration for Testing and Production",
+    "description": "In-memory database works for dev but needs proper configuration for persistent testing and production deployment.",
+    "blocking_items": [
+      "Data not persistent between test runs",
+      "Cannot test user isolation properly",
+      "Production deployment blocked",
+      "Load testing not possible"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Set Up MongoDB Atlas (Production)",
+        "details": "1) Create account at mongodb.com/cloud. 2) Create cluster (free tier available). 3) Add database user (username, strong password). 4) Add IP whitelist (0.0.0.0/0 for dev, specific IPs for prod). 5) Get connection string"
+      },
+      {
+        "step": 2,
+        "task": "Configure Environment Variables",
+        "details": "Update backend/.env: USE_IN_MEMORY_DB=false (leave true for dev). Add MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/asl_live_detection?retryWrites=true&w=majority"
+      },
+      {
+        "step": 3,
+        "task": "Create Test Database Isolation",
+        "details": "Create separate MongoDB database for testing (e.g., 'asl_live_detection_test'). Add MONGODB_TEST_URI to .env.test. Jest setup: clear test database before/after each test suite"
+      },
+      {
+        "step": 4,
+        "task": "Update Database Connection Logic",
+        "details": "Edit backend/src/db.js: if NODE_ENV=test, use MONGODB_TEST_URI; if USE_IN_MEMORY_DB=true, use memory database; otherwise use MONGODB_URI"
+      },
+      {
+        "step": 5,
+        "task": "Add Database Initialization Script",
+        "details": "Create backend/scripts/db-setup.js: sets up indexes, creates collections, optionally seeds test data. Run once after connecting to new database"
+      },
+      {
+        "step": 6,
+        "task": "Add Health Check Validation",
+        "details": "Update backend/src/routes/health.js to report database connection status; include replica set info if applicable"
+      },
+      {
+        "step": 7,
+        "task": "Document Database Setup",
+        "details": "Create DEPLOYMENT.md with instructions: local dev (in-memory), test (MongoDB test instance), production (Atlas or self-hosted). Include connection troubleshooting"
+      },
+      {
+        "step": 8,
+        "task": "Test Database Configuration",
+        "details": "1) Start with in-memory (USE_IN_MEMORY_DB=true). 2) Create user, add translation. 3) Restart app, verify data lost (expected). 4) Switch to MongoDB, repeat, verify data persists. 5) Run tests with test database"
+      }
+    ],
+    "validation": "Data persists across restarts; test database isolates test data from production; all CRUD operations work with both in-memory and MongoDB",
+    "error_handling": "If MongoDB connection fails: verify connection string; check IP whitelist; ensure network connectivity. If test database contaminated: clear collections before test run",
+    "dependencies": ["MongoDB Atlas account or local MongoDB instance", "Node.js mongodb driver"],
+    "estimated_hours": 4,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "backend/.env.test with MongoDB test URI",
+      "Updated backend/src/db.js with environment-based config",
+      "backend/scripts/db-setup.js initialization script",
+      "DEPLOYMENT.md documentation",
+      "All tests using isolated database"
+    ]
+  }
+]

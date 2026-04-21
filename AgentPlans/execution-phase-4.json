@@ -1,0 +1,92 @@
+{
+  "phase": 4,
+  "title": "Integration & End-to-End Prototype - Execution Plan",
+  "overview": "Integrate all components into full prototype.",
+  "prerequisites": [
+    "Phase 1-3 completed.",
+    "Backend running locally.",
+    "Flutter app from Phase 1.",
+    "ML model from Phase 2."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "description": "Integrate ML into Flutter.",
+      "actions": [
+        "Add tflite plugin, load model."
+      ],
+      "validation": "Inference works in app.",
+      "error_handling": "Check plugin versions; debug model loading."
+    },
+    {
+      "step": 2,
+      "description": "Connect to backend.",
+      "actions": [
+        "HTTP client for auth and sync."
+      ],
+      "validation": "Auth and data sync.",
+      "error_handling": "Handle network errors; test with mock server."
+    },
+    {
+      "step": 3,
+      "description": "Implement bidirectional translation.",
+      "actions": [
+        "Sign-to-text/audio, text-to-sign hints."
+      ],
+      "validation": "Both directions work.",
+      "error_handling": "Debug data flow; ensure model compatibility."
+    },
+    {
+      "step": 4,
+      "description": "Add UI feedback and animations.",
+      "actions": [
+        "Transitions for results, audio controls."
+      ],
+      "validation": "UI polished.",
+      "error_handling": "Use Flutter inspector; fix animation glitches."
+    },
+    {
+      "step": 5,
+      "description": "Ensure offline-first.",
+      "actions": [
+        "Local ML, optional sync."
+      ],
+      "validation": "Works offline.",
+      "error_handling": "Test without network; implement caching."
+    },
+    {
+      "step": 6,
+      "description": "Test full flow.",
+      "actions": [
+        "End-to-end user journey."
+      ],
+      "validation": "Complete and accurate.",
+      "error_handling": "Log integration issues; iterate on fixes."
+    },
+    {
+      "step": 7,
+      "description": "Evaluate audit report and create corrections.json.",
+      "actions": [
+        "Read audits/phase-4/audit-report.md.",
+        "Identify potential issues from findings.",
+        "Create audits/phase-4/corrections.json with fixes for each issue."
+      ],
+      "validation": "corrections.json created with actionable fixes.",
+      "error_handling": "If no issues, create empty array; ensure JSON syntax."
+    }
+  ],
+  "bug_logging": "Log to audits/phase-4/bugs.json.",
+  "completion": "Write audit report to audits/phase-4/audit-report.md.",
+  "corrections_format": {
+    "file_path": "audits/phase-4/corrections.json",
+    "structure": [
+      {
+        "issue_id": "string (matches bug id or finding)",
+        "description": "string (issue summary)",
+        "correction": "string (step-by-step fix)",
+        "status": "pending|applied",
+        "phase": 4
+      }
+    ]
+  }
+}

@@ -1,0 +1,270 @@
+[
+  {
+    "issue_id": "TEST-001",
+    "category": "Testing Setup",
+    "severity": "🟠 HIGH",
+    "title": "Jest vs Integration Script Testing Approach",
+    "description": "Clarify testing strategy: Jest for unit tests, integration scripts for E2E, Flutter tests for UI. Clear documentation on when to use which framework.",
+    "blocking_items": [
+      "Confusion on test execution approach",
+      "Inconsistent test coverage metrics",
+      "CI/CD unsure which framework to run",
+      "Difficult to achieve >80% code coverage target"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Define Testing Pyramid",
+        "details": "Establish coverage: 50% unit tests (Jest), 30% integration tests (scripts), 20% E2E tests (Selenium/Appium for Flutter). Unit tests: route-level validation. Integration tests: full workflows. E2E tests: user scenarios"
+      },
+      {
+        "step": 2,
+        "task": "Create Jest Unit Tests",
+        "details": "Expand backend/__tests__ with focused test files: auth.unit.test.js, translations.unit.test.js, middleware.unit.test.js, utils.unit.test.js. Mock dependencies (database, external APIs). Run offline, fast (<1s)"
+      },
+      {
+        "step": 3,
+        "task": "Refactor Integration Scripts as Jest Suites",
+        "details": "Convert backend/scripts/test_sprint*.js patterns into Jest test suites. Keep live API testing as separate 'integration' test type in Jest config. Maintain current integration scripts as manual E2E validation tools"
+      },
+      {
+        "step": 4,
+        "task": "Create Flutter Unit Tests",
+        "details": "Add mobile/test/ with: api_service_test.dart (mock HTTP), ml_service_test.dart (mock model), ui_widget_test.dart (widget rendering). Use mockito for mocking. Coverage target: >70%"
+      },
+      {
+        "step": 5,
+        "task": "Create Flutter Integration Tests",
+        "details": "Add mobile/integration_test/ with full app flows: auth_flow_test.dart, translation_flow_test.dart. Use integration_test package. Run against real backend. Coverage: main user journeys"
+      },
+      {
+        "step": 6,
+        "task": "Create Python ML Tests",
+        "details": "Add ml/tests/ with: test_model_loading.py (verify TensorFlow Lite loads), test_inference.py (verify predictions return correct shape), test_accuracy.py (benchmark inference speed). Use pytest framework"
+      },
+      {
+        "step": 7,
+        "task": "Document Test Execution",
+        "details": "Create TESTING.md: 'npm test' (Jest unit+integration), 'npm run test:e2e' (live API), 'flutter test', 'pytest'. Include expected runtimes, parallelization strategy, debugging tips"
+      },
+      {
+        "step": 8,
+        "task": "Configure Coverage Aggregation",
+        "details": "Add coverage configuration: Jest generates coverage.json; combine with flutter coverage; create merged report. Use nyc or similar tool to aggregate. Minimum: >80% for production code"
+      }
+    ],
+    "validation": "Jest tests run in <30 seconds; Flutter tests run in <60 seconds; coverage reports generated with >80% for core modules; CI can run all tests automatically",
+    "error_handling": "If coverage low: identify untested functions, add unit tests. If tests flaky: mock external dependencies, add retry logic, use test data factory",
+    "dependencies": ["Jest configured", "Flutter test package", "pytest installed", "Coverage tools"],
+    "estimated_hours": 12,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "backend/__tests__/ with 40+ Jest unit tests",
+      "mobile/test/ with 15+ Flutter unit tests",
+      "mobile/integration_test/ with 10+ integration tests",
+      "ml/tests/ with 8+ model tests",
+      "TESTING.md documentation",
+      ">80% code coverage report"
+    ]
+  },
+  {
+    "issue_id": "TEST-002",
+    "category": "Testing Setup",
+    "severity": "🟠 HIGH",
+    "title": "UI and Accessibility Testing",
+    "description": "No accessibility or UI compliance testing. Need to add Flutter widget tests and accessibility validation to ensure app is usable by all users.",
+    "blocking_items": [
+      "No verification that UI is accessible to users with disabilities",
+      "Widget rendering not tested",
+      "Localization not tested",
+      "Screen size variations not tested"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Create Widget Tests for All Screens",
+        "details": "Create mobile/test/widgets/ with tests for: LoginScreen, RegisterScreen, TranslationScreen, SettingsScreen. Verify widgets render, buttons clickable, text visible. Use WidgetTester framework"
+      },
+      {
+        "step": 2,
+        "task": "Add Accessibility Tests",
+        "details": "Use flutter test with Semantics layer verification: all buttons have labels, images have descriptions, text contrast >4.5:1. Check: key navigation, screen reader support, semantic tree correctness"
+      },
+      {
+        "step": 3,
+        "task": "Test Responsive Design",
+        "details": "Create mobile/test/responsive_test.dart: test layouts on phone (360x640), tablet (600x800), landscape (800x360). Verify text readable, buttons reachable, layout doesn't break"
+      },
+      {
+        "step": 4,
+        "task": "Test Localization",
+        "details": "If app supports multiple languages: create mobile/test/localization_test.dart. Verify all strings translated, text rendering correct for each locale, RTL support (if applicable)"
+      },
+      {
+        "step": 5,
+        "task": "Create Theme Tests",
+        "details": "Create mobile/test/theme_test.dart: verify colors accessible (pass WCAG AAA), text sizing consistent, typography hierarchy clear. Test light and dark modes if supported"
+      },
+      {
+        "step": 6,
+        "task": "Add Input Validation Tests",
+        "details": "Test all user inputs: email validation, password complexity display, form error messages. Verify invalid inputs rejected with clear messaging. Test XSS prevention"
+      },
+      {
+        "step": 7,
+        "task": "Performance Testing",
+        "details": "Create mobile/test/performance_test.dart: measure UI render time (<16ms for 60fps), measure model inference on real device, measure API response time. Log baseline metrics"
+      }
+    ],
+    "validation": "All widgets render correctly; accessibility tests pass (WCAG 2.1 AA minimum); responsive design verified on multiple screen sizes; performance benchmarks established",
+    "error_handling": "If accessibility tests fail: add semantic labels, verify text contrast with tools like WebAIM. If performance slow: profile with Flutter DevTools, optimize widget rebuilds, lazy load data",
+    "dependencies": ["Flutter SDK >=3.0", "Flutter test package", "Accessibility checker tools"],
+    "estimated_hours": 10,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "mobile/test/widgets/ with 20+ widget tests",
+      "mobile/test/accessibility_test.dart",
+      "mobile/test/responsive_test.dart",
+      "Accessibility audit report",
+      "Performance baseline metrics"
+    ]
+  },
+  {
+    "issue_id": "TEST-003",
+    "category": "Testing Setup",
+    "severity": "🟡 MEDIUM",
+    "title": "Integration Test Coverage for All API Endpoints",
+    "description": "Need comprehensive end-to-end test coverage for all API endpoints and workflows to ensure system stability before Phase 6.",
+    "blocking_items": [
+      "Incomplete test coverage for edge cases",
+      "Error scenarios not fully tested",
+      "User isolation not verified",
+      "Pagination not tested",
+      "Concurrent operations not tested"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Create Comprehensive API Test Suite",
+        "details": "Create backend/__tests__/integration.test.js with test cases for each endpoint: 1) POST /auth/register: valid, invalid email, weak password, duplicate email. 2) POST /auth/login: valid, wrong password, nonexistent user. 3) POST /translations: valid, invalid confidence, no auth. 4) GET /translations: paginated results, user isolation, sorting"
+      },
+      {
+        "step": 2,
+        "task": "Test Error Handling",
+        "details": "Create exhaustive error scenario tests: 400 (validation errors), 401 (auth errors), 409 (duplicate), 500 (server errors). Verify error response format, status codes, error codes. Test timeout handling"
+      },
+      {
+        "step": 3,
+        "task": "Test User Isolation",
+        "details": "Create test with multiple users: User A creates translation, User B tries to access User A's translation. Verify User B gets empty list or 403. Test pagination, filtering per user"
+      },
+      {
+        "step": 4,
+        "task": "Test Pagination",
+        "details": "Create 100 test translations for one user. Test: 1) GET /translations?page=1&limit=10, verify returns 10 items. 2) GET /translations?page=2&limit=10, verify different items. 3) GET /translations?page=100, verify empty if out of range. Test default pagination"
+      },
+      {
+        "step": 5,
+        "task": "Test Token Expiration",
+        "details": "Create test with JWTs: issue short-expiry token (5 seconds), wait 6 seconds, try API call, verify 401. Test token refresh (if implemented), verify new token works"
+      },
+      {
+        "step": 6,
+        "task": "Test Rate Limiting",
+        "details": "Create test hitting rate limits: 1) Send 6 auth requests in 15 seconds, verify 5th succeeds, 6th returns 429. 2) Repeat for register (10/hour). 3) Test reset after time window"
+      },
+      {
+        "step": 7,
+        "task": "Test Data Validation",
+        "details": "For each endpoint, test: 1) Missing required fields. 2) Invalid field types. 3) Out-of-range values (confidence >1). 4) XSS payloads (escaped correctly). 5) SQL injection attempts (no vulnerability)"
+      },
+      {
+        "step": 8,
+        "task": "Test Concurrent Operations",
+        "details": "Create multiple users, make concurrent requests: multiple registrations, simultaneous translations, concurrent reads. Verify no data corruption, no race conditions"
+      },
+      {
+        "step": 9,
+        "task": "Create E2E User Journey Test",
+        "details": "Single test covering full flow: 1) Register user. 2) Login. 3) Create translation. 4) Get translations. 5) Verify translation in list. 6) Logout. Should complete in <5 seconds"
+      }
+    ],
+    "validation": ">95% endpoint coverage with tests; all error scenarios tested; concurrent operations safe; user isolation verified; pagination working correctly",
+    "error_handling": "If tests fail: check backend logs, verify test data setup, check database state before/after each test. Use test fixtures for consistent setup",
+    "dependencies": ["Jest configured", "supertest for HTTP", "MongoDB test instance"],
+    "estimated_hours": 15,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "backend/__tests__/integration.test.js (100+ test cases)",
+      "Test coverage report (>95%)",
+      "Error scenario test mapping",
+      "E2E workflow validation passing"
+    ]
+  },
+  {
+    "issue_id": "TEST-004",
+    "category": "Testing Setup",
+    "severity": "🟡 MEDIUM",
+    "title": "Performance Benchmarking and Load Testing",
+    "description": "No performance baselines or load testing. Need to establish performance targets and verify system can handle realistic load.",
+    "blocking_items": [
+      "Unknown API response times",
+      "Unknown DB query performance",
+      "Unknown ML inference speed on device",
+      "No capacity planning data"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Create API Performance Test",
+        "details": "Create backend/scripts/perf_test.js: measure response time for each endpoint: auth/register (<200ms), auth/login (<200ms), POST translation (<300ms), GET translations (<500ms for 10 items). Run 100x, calculate p50, p95, p99 latencies"
+      },
+      {
+        "step": 2,
+        "task": "Create Database Query Benchmarks",
+        "details": "Create backend/scripts/db_perf_test.js: measure query times with different datasets: 0 translations (baseline), 100, 1000, 10000. Track: user find (<10ms), translation find (<50ms), pagination (<100ms). Identify slow queries"
+      },
+      {
+        "step": 3,
+        "task": "Create Load Test",
+        "details": "Use Apache JMeter or k6 tool. Create load test: 1) Simulate 10 concurrent users for 1 minute. 2) Gradually increase to 100 users. 3) Measure: response time distribution, error rate, throughput (requests/sec). Identify breaking point"
+      },
+      {
+        "step": 4,
+        "task": "Create ML Inference Benchmark",
+        "details": "Create mobile/test/ml_performance_test.dart: measure inference time on real device (not emulator). Baseline target: <200ms per frame. Measure memory usage. Test with 30fps camera stream"
+      },
+      {
+        "step": 5,
+        "task": "Create End-to-End Latency Test",
+        "details": "Measure total latency from camera frame → ML inference → API POST → response: target <1 second. Break down: capture (16ms), inference (200ms), API (300ms), response (100ms)"
+      },
+      {
+        "step": 6,
+        "task": "Document Performance Targets",
+        "details": "Create PERFORMANCE.md: 1) API targets: register/login <200ms, POST <300ms, GET <500ms. 2) DB targets: query <50ms. 3) ML target: <200ms inference. 4) E2E target: <1s camera→result. Measured on reference hardware"
+      },
+      {
+        "step": 7,
+        "task": "Set Up Continuous Performance Monitoring",
+        "details": "Add performance test to CI/CD: run on every commit, compare against baseline. Flag PRs that degrade performance >10%. Archive historical metrics"
+      }
+    ],
+    "validation": "Performance baselines established and documented; load test shows system stable up to target concurrent users; no regressions detected in CI",
+    "error_handling": "If performance degrades: profile with DevTools, identify bottleneck (DB query, API processing, frontend rendering), optimize. If load test fails: scale backend (more workers), add caching, optimize queries",
+    "dependencies": ["Apache JMeter or k6", "Flutter DevTools", "Node.js profiler"],
+    "estimated_hours": 10,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "backend/scripts/perf_test.js",
+      "Load test scripts with results",
+      "PERFORMANCE.md with baselines",
+      "CI/CD performance monitoring",
+      "Performance regression detection"
+    ]
+  }
+]

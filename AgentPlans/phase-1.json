@@ -1,0 +1,59 @@
+{
+  "phase": 1,
+  "title": "Mobile Frontend Baseline",
+  "goal": "Create a Flutter app scaffold with clean architecture (BLoC), responsive UI/UX design, and core screens for ASL translation features, ensuring a chic, friendly interface with resting colors, animations, and transitions.",
+  "scope": [
+    "Generate a Flutter project in mobile/ with clean architecture folders (lib/app, lib/features, lib/core, lib/shared).",
+    "Implement BLoC pattern for state management across features.",
+    "Design and implement key screens: Home (welcome/onboarding), Camera Capture (for ASL signs), Translation Results (subtitles/audio display), Settings (user preferences, accessibility).",
+    "Apply responsive layout using Flutter's responsive widgets, ensuring support for various screen sizes.",
+    "Incorporate UI/UX guidelines: resting color palette (e.g., soft blues/greens), smooth animations/transitions (e.g., fade-ins for results, gesture-based interactions), accessibility features for deaf users (e.g., high contrast, large text).",
+    "Add placeholder content and basic navigation between screens.",
+    "Ensure the app builds and runs on at least one supported platform (Android/iOS), with no build errors."
+  ],
+  "deliverables": [
+    "mobile/pubspec.yaml with dependencies for BLoC, camera, animations, and UI libraries.",
+    "lib/main.dart entrypoint with app initialization, theme setup (resting colors), and routing.",
+    "Core architecture folders with BLoC implementations for each feature.",
+    "Screens with responsive layouts, animations (e.g., using Flutter's Hero, AnimatedContainer), and placeholder ASL-related content.",
+    "Basic camera permission handling and mock camera feed for sign capture.",
+    "Audit report and bug log for this phase."
+  ],
+  "examples": {
+    "color_palette": {
+      "primary": "#4A90E2",
+      "secondary": "#7ED321",
+      "accent": "#F5A623",
+      "background": "#F8F9FA",
+      "surface": "#FFFFFF",
+      "error": "#D32F2F"
+    },
+    "animation_code": "AnimatedContainer(duration: Duration(milliseconds: 300), width: _isExpanded ? 200 : 100, curve: Curves.easeInOut);",
+    "bloc_example": {
+      "event": "class LoadHomeEvent extends HomeEvent {}",
+      "state": "class HomeLoadedState extends HomeState { final String message; HomeLoadedState(this.message); }",
+      "bloc": "if (event is LoadHomeEvent) { yield HomeLoadedState('Welcome to ASL App'); }"
+    },
+    "screen_structure": "Scaffold(appBar: AppBar(title: Text('Home')), body: Center(child: Text('ASL Translation Ready')));"
+  },
+  "audit": {
+    "must_verify": [
+      "Flutter project builds successfully without errors.",
+      "App launches, navigates between screens smoothly with animations/transitions.",
+      "UI is responsive and follows chic design principles (resting colors, friendly layout).",
+      "BLoC state management is implemented correctly with no crashes.",
+      "Project structure aligns with clean architecture and spec expectations.",
+      "No unsatisfied dependencies; all packages are compatible and licensed appropriately.",
+      "corrections.json is created with fixes for any identified issues."
+    ],
+    "audit_report_path": "audits/phase-1/audit-report.md",
+    "bug_log_path": "audits/phase-1/bugs.json"
+  },
+  "bug_log_format": {
+    "id": "string",
+    "description": "string",
+    "severity": "low|med|high",
+    "status": "open|resolved",
+    "phase": 1
+  }
+}

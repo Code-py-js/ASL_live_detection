@@ -1,0 +1,105 @@
+{
+  "phase": 1,
+  "title": "Mobile Frontend Baseline - Execution Plan",
+  "overview": "Build the Flutter app scaffold with clean architecture, BLoC, and UI/UX screens. Ensure responsive design and animations.",
+  "prerequisites": [
+    "Flutter SDK installed and in PATH.",
+    "Android Studio or Xcode for emulators.",
+    "Dart SDK available.",
+    "Git repository set up."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "description": "Generate Flutter project in mobile/.",
+      "actions": [
+        "Run: flutter create mobile",
+        "Navigate: cd mobile"
+      ],
+      "validation": "pubspec.yaml and lib/ created.",
+      "error_handling": "If flutter command not found, install Flutter SDK. If directory exists, remove it first."
+    },
+    {
+      "step": 2,
+      "description": "Set up clean architecture folders: lib/app, lib/features, lib/core, lib/shared.",
+      "actions": [
+        "Create folders and initial files (e.g., lib/core/bloc/, lib/features/home/)."
+      ],
+      "validation": "Folders exist.",
+      "error_handling": "Check file permissions; use mkdir if manual creation fails."
+    },
+    {
+      "step": 3,
+      "description": "Configure pubspec.yaml with BLoC, camera, animations dependencies.",
+      "actions": [
+        "Add: flutter_bloc, camera, lottie, etc. Run: flutter pub get"
+      ],
+      "validation": "Dependencies installed without errors.",
+      "error_handling": "If pub get fails, check internet; resolve version conflicts in pubspec.yaml."
+    },
+    {
+      "step": 4,
+      "description": "Implement main.dart with theme (resting colors), routing.",
+      "actions": [
+        "Set up MaterialApp with custom theme, routes to Home, Camera, Results, Settings."
+      ],
+      "validation": "App compiles.",
+      "error_handling": "Fix syntax errors; ensure theme colors match examples in phase-1.json."
+    },
+    {
+      "step": 5,
+      "description": "Create screens with responsive layouts and animations.",
+      "actions": [
+        "Home: Onboarding with fade animations.",
+        "Camera: Camera preview with permissions.",
+        "Results: Display subtitles with transitions.",
+        "Settings: User prefs with smooth interactions."
+      ],
+      "validation": "Screens render correctly.",
+      "error_handling": "Use Flutter dev tools to debug layout issues; ensure animations don't cause crashes."
+    },
+    {
+      "step": 6,
+      "description": "Implement BLoC for state management.",
+      "actions": [
+        "Create blocs for each feature, handle events/states."
+      ],
+      "validation": "State flows work.",
+      "error_handling": "Debug with BlocObserver; ensure events trigger correct states."
+    },
+    {
+      "step": 7,
+      "description": "Build and run on emulator.",
+      "actions": [
+        "flutter build apk && flutter run"
+      ],
+      "validation": "App runs without crashes.",
+      "error_handling": "Check emulator setup; resolve build errors by updating dependencies."
+    },
+    {
+      "step": 8,
+      "description": "Evaluate audit report and create corrections.json.",
+      "actions": [
+        "Read audits/phase-1/audit-report.md.",
+        "Identify potential issues from findings.",
+        "Create audits/phase-1/corrections.json with fixes for each issue."
+      ],
+      "validation": "corrections.json created with actionable fixes.",
+      "error_handling": "If no issues, create empty array; ensure JSON syntax."
+    }
+  ],
+  "bug_logging": "Log issues to audits/phase-1/bugs.json.",
+  "completion": "Write audit report to audits/phase-1/audit-report.md.",
+  "corrections_format": {
+    "file_path": "audits/phase-1/corrections.json",
+    "structure": [
+      {
+        "issue_id": "string (matches bug id or finding)",
+        "description": "string (issue summary)",
+        "correction": "string (step-by-step fix)",
+        "status": "pending|applied",
+        "phase": 1
+      }
+    ]
+  }
+}

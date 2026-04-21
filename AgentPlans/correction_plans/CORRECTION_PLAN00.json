@@ -1,0 +1,756 @@
+{
+  "project": "ASL Live Detection",
+  "phase": 3,
+  "lastUpdated": "2026-03-18",
+  "overview": "Comprehensive correction plan for backend API stability, security, and reliability",
+  "categories": [
+    {
+      "id": "DB-001",
+      "category": "Database & Persistence",
+      "severity": "high",
+      "issues": [
+        {
+          "id": "DB-001-001",
+          "title": "In-memory DB data loss on restart",
+          "description": "All user and translation data lost when server restarts; not suitable for production or testing persistence",
+          "impact": "Critical - users lose all data on deployment or crash",
+          "root_cause": "Using mongodb-memory-server which stores data in RAM, not persistent storage",
+          "fix": {
+            "type": "Use persistent database",
+            "steps": [
+              "Migrate to MongoDB Atlas (cloud) or local MongoDB instance",
+              "Update .env to point to real MongoDB URI: MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/signconnect",
+              "Remove USE_IN_MEMORY_DB flag or set to false in production",
+              "Test connection with real database before deployment"
+            ],
+            "codeExample": "MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/signconnect?retryWrites=true&w=majority",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "DB-001-002",
+          "title": "No database indexes on frequently queried fields",
+          "description": "Email lookups (login, duplicate check) and user lookups perform full collection scans",
+          "impact": "Performance degradation as user count grows; O(n) queries instead of O(log n)",
+          "root_cause": "User model has no indexes defined on searchable fields",
+          "fix": {
+            "type": "Add database indexes",
+            "steps": [
+              "Update User.js: add index to email field",
+              "Update Translation.js: add index to userId field for faster user translation retrieval",
+              "Run database migration to create indexes on existing collections"
+            ],
+            "codeExample": "email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true }",
+            "estimatedEffort": "1 hour"
+          }
+        },
+        {
+          "id": "DB-001-003",
+          "title": "No schema validation for data integrity",
+          "description": "Invalid data accepted at database layer (negative confidence, null email, empty text)",
+          "impact": "Data corruption; translation confidence could be -999, invalid emails stored",
+          "root_cause": "Mongoose schemas define fields but not constraints or ranges",
+          "fix": {
+            "type": "Add Mongoose validators and constraints",
+            "steps": [
+              "User.js: add email format validation and required checks",
+              "Translation.js: add confidence range (0-1), non-empty text validation",
+              "Add custom validators for business logic (e.g., email length limits)"
+            ],
+            "codeExample": "confidence: { type: Number, default: 0, min: 0, max: 1, validate: { validator: (v) => v >= 0 && v <= 1 } }",
+            "estimatedEffort": "1 hour"
+          }
+        },
+        {
+          "id": "DB-001-004",
+          "title": "Orphaned translation records on user deletion",
+          "description": "If user is deleted, their translations remain in database with dangling references",
+          "impact": "Database bloat; orphaned records never cleaned up; potential data exposure",
+          "root_cause": "No foreign key constraints or cascade delete rules",
+          "fix": {
+            "type": "Implement cascade delete or add user deletion endpoint",
+            "steps": [
+              "Create DELETE /api/auth/user endpoint to delete user and all their translations",
+              "Use Mongoose middleware to delete translations before user deletion",
+              "Alternatively, use MongoDB transaction to delete user and associated translations atomically"
+            ],
+            "codeExample": "userSchema.pre('deleteOne', async function(next) { await Translation.deleteMany({ userId: this._id }); next(); });",
+            "estimatedEffort": "2 hours"
+          }
+        }
+      ]
+    },
+    {
+      "id": "AUTH-001",
+      "category": "Authentication & Security",
+      "severity": "critical",
+      "issues": [
+        {
+          "id": "AUTH-001-001",
+          "title": "No password complexity validation",
+          "description": "Weak passwords accepted (e.g., 'pass', '123456', single character)",
+          "impact": "Account compromise; weak passwords easy to brute force",
+          "root_cause": "No password strength checks in register endpoint",
+          "fix": {
+            "type": "Add password validation rules",
+            "steps": [
+              "Require minimum 8 characters",
+              "Require uppercase, lowercase, number, special character",
+              "Check against common weak passwords list",
+              "Reject if < 10 entropy score"
+            ],
+            "codeExample": "const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$/; if (!passwordRegex.test(password)) return res.status(400).json({ message: 'Password must be 8+ chars...' });",
+            "estimatedEffort": "1 hour"
+          }
+        },
+        {
+          "id": "AUTH-001-003",
+          "title": "JWT tokens have long expiry with no refresh mechanism",
+          "description": "7-day token expiry is too long; no way to revoke tokens; no token refresh endpoint",
+          "impact": "Stolen tokens valid for 7 days; no way to force logout; increased session hijacking risk",
+          "root_cause": "Basic JWT implementation without refresh token pattern",
+          "fix": {
+            "type": "Implement refresh token pattern",
+            "steps": [
+              "Create short-lived access token (15 minutes) and long-lived refresh token (7 days)",
+              "Store refresh token in database (table: RefreshToken { token, userId, expiresAt })",
+              "Create POST /api/auth/refresh endpoint to exchange refresh token for new access token",
+              "Validate refresh token against database (prevent use after logout)",
+              "Return both tokens on register/login"
+            ],
+            "codeExample": "const accessToken = jwt.sign({ userId }, secret, { expiresIn: '15m' }); const refreshToken = jwt.sign({ userId }, secret, { expiresIn: '7d' }); await RefreshToken.create({ token: refreshToken, userId });",
+            "estimatedEffort": "3 hours"
+          }
+        },
+        {
+          "id": "AUTH-001-004",
+          "title": "No token revocation/blacklist mechanism",
+          "description": "Users can't force logout; stolen tokens work until 7-day expiry; tokens can't be revoked on account compromise",
+          "impact": "No way to prevent token reuse after logout; account takeover risk",
+          "root_cause": "No logout implementation; JWT inherently can't be revoked without DB lookup",
+          "fix": {
+            "type": "Implement token blacklist or refresh token invalidation",
+            "steps": [
+              "Option 1: Store revoked tokens in database (TokenBlacklist { token, expiresAt })",
+              "Option 2: Add 'jti' (JWT ID) to token and check against blacklist on requests",
+              "Option 3: Invalidate all refresh tokens for user on logout",
+              "Create POST /api/auth/logout endpoint to add token to blacklist",
+              "Check blacklist in authenticate middleware before allowing request"
+            ],
+            "codeExample": "router.post('/logout', authenticate, async (req, res) => { await TokenBlacklist.create({ token: req.headers.authorization.split(' ')[1], expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }); res.json({ message: 'Logged out' }); });",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "AUTH-001-005",
+          "title": "JWT_SECRET stored in readable .env file",
+          "description": "Secret stored in plaintext .env file; if repo or server compromised, all tokens can be forged",
+          "impact": "Critical - Full session hijacking if .env leaked",
+          "root_cause": "Using local .env instead of secure secrets management",
+          "fix": {
+            "type": "Move secret to secure vault",
+            "options": [
+              "AWS Secrets Manager (for production)",
+              "HashiCorp Vault",
+              "1Password Secrets",
+              "Azure Key Vault",
+              "GitHub Secrets (for CI/CD, not runtime)"
+            ],
+            "steps": [
+              "Create secret in chosen vault",
+              "Update backend to fetch JWT_SECRET from vault at startup",
+              "Remove JWT_SECRET from .env file",
+              "Add fallback only for local development using insecure flag",
+              "Rotate secret annually or after suspected breach"
+            ],
+            "codeExample": "const jwtSecret = process.env.NODE_ENV === 'production' ? await getFromVault('jwt-secret') : process.env.JWT_SECRET;",
+            "estimatedEffort": "3 hours"
+          }
+        },
+        {
+          "id": "AUTH-001-006",
+          "title": "No brute-force protection on auth endpoints",
+          "description": "Attackers can repeatedly try login/register with different passwords without limits",
+          "impact": "Account takeover; credential stuffing attacks; DOS through auth endpoint spam",
+          "root_cause": "Generic rate limiter (120 req/min) not auth-specific",
+          "fix": {
+            "type": "Add auth-specific rate limiting",
+            "steps": [
+              "Create stricter limiter: 5 attempts per 15 minutes per email address",
+              "Create stricter limiter: 10 register attempts per IP per hour",
+              "Store failed attempts in cache (Redis) with expiry",
+              "Return 429 status and 'Too many attempts' message",
+              "Lock account temporarily after 10 failed attempts (optional)"
+            ],
+            "codeExample": "const authLimiter = rateLimit({ windowMs: 15*60*1000, max: 5, keyGenerator: (req) => req.body?.email || req.ip, skip: (req) => req.method === 'GET' });",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "AUTH-001-007",
+          "title": "CORS allows all origins",
+          "description": "Anyone from any domain can call your API; not restricted to front-end domains",
+          "impact": "Cross-site attacks; unauthorized API usage from external sites",
+          "root_cause": "corsOptions.origin set to '*'",
+          "fix": {
+            "type": "Restrict CORS to allowed origins",
+            "steps": [
+              "Define allowed origins in .env: ALLOWED_ORIGINS=http://localhost:3000,https://yourapp.com",
+              "Update corsOptions.origin to whitelist only these domains",
+              "Disallow credentials if origin is not trusted",
+              "Test that cross-origin requests from other domains are rejected"
+            ],
+            "codeExample": "origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','), credentials: true",
+            "estimatedEffort": "1 hour"
+          }
+        }
+      ]
+    },
+    {
+      "id": "API-001",
+      "category": "API Design & Error Handling",
+      "severity": "medium",
+      "issues": [
+        {
+          "id": "API-001-001",
+          "title": "No API versioning",
+          "description": "Routes are /api/auth/register; if API changes, all clients break",
+          "impact": "Can't make breaking changes; stuck with old API contracts",
+          "root_cause": "Routes not versioned",
+          "fix": {
+            "type": "Add API versioning",
+            "steps": [
+              "Update routes to /api/v1/auth/register, /api/v1/translations/*",
+              "Create new version endpoint /api/v2/* when breaking changes needed",
+              "Support multiple API versions during transition",
+              "Document version deprecation timeline"
+            ],
+            "codeExample": "app.use('/api/v1/auth', authRoutes); app.use('/api/v1/translations', translationRoutes);",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "API-001-002",
+          "title": "Inconsistent error response format",
+          "description": "Errors return different formats: sometimes 'message' field, no error codes, no details field",
+          "impact": "Client code hard to parse; can't distinguish error types programmatically",
+          "root_cause": "Ad-hoc error response format",
+          "fix": {
+            "type": "Define standardized error response schema",
+            "steps": [
+              "Create error response standard: { code: string, message: string, details?: object, timestamp: ISO8601 }",
+              "Define error codes: AUTH_INVALID_CREDENTIALS, DB_CONFLICT, VALIDATION_ERROR, etc.",
+              "Create error handler middleware to wrap all errors in standard format",
+              "Document all possible error codes in API docs"
+            ],
+            "codeExample": "{ code: 'AUTH_INVALID_CREDENTIALS', message: 'Invalid email or password', timestamp: '2026-03-18T...' }",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "API-001-003",
+          "title": "Generic 500 errors without details",
+          "description": "All server errors return 500 with error.message; client can't distinguish user error from bug",
+          "impact": "Hard to debug; users see unhelpful 'Internal server error' messages",
+          "root_cause": "Catch-all error handler logs but returns same 500 for all errors",
+          "fix": {
+            "type": "Add detailed error logging and categorization",
+            "steps": [
+              "Log full error stack traces server-side with context (user, endpoint, request data)",
+              "Return safe error message to client ('Something went wrong'), log ID to stderr",
+              "Return 400 for validation/user errors, 500 only for true server errors",
+              "Integrate Sentry/DataDog to alert on 500 errors",
+              "Create error.log file to track all errors for debugging"
+            ],
+            "codeExample": "console.error(`[ERROR-${uuid}]`, err); res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Something went wrong', errorId: uuid });",
+            "estimatedEffort": "3 hours"
+          }
+        },
+        {
+          "id": "API-001-004",
+          "title": "No request validation; XSS/injection risks",
+          "description": "Invalid inputs not checked before database; users could inject scripts in inputText",
+          "impact": "XSS attacks; invalid data in database; NoSQL injection possible",
+          "root_cause": "No input sanitization or validation library",
+          "fix": {
+            "type": "Add input validation and sanitization",
+            "steps": [
+              "Install validator or joi library",
+              "Create validation middleware for all routes",
+              "Validate email format, password length, text fields not empty",
+              "Sanitize strings to remove scripts/HTML tags",
+              "Reject requests failing validation with 400 status"
+            ],
+            "codeExample": "const { email, password } = req.body; if (!validator.isEmail(email)) return res.status(400).json({ code: 'INVALID_EMAIL', message: 'Invalid email format' });",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "API-001-005",
+          "title": "No API documentation",
+          "description": "No Swagger/OpenAPI docs; developers don't know endpoint contracts, request/response formats",
+          "impact": "Slow onboarding; integration errors; can't auto-generate client SDKs",
+          "root_cause": "No documentation tooling integrated",
+          "fix": {
+            "type": "Generate and host API documentation",
+            "steps": [
+              "Install swagger-jsdoc and swagger-ui-express",
+              "Add JSDoc comments to all route handlers documenting request/response",
+              "Generate Swagger JSON at /api/docs/swagger.json",
+              "Host Swagger UI at /api/docs",
+              "Update documentation on deployment"
+            ],
+            "codeExample": "/**\\n * @swagger\\n * /api/v1/auth/register:\\n *   post:\\n *     requestBody:\\n *       content:\\n *         application/json:\\n *           schema:\\n *             properties:\\n *               email:\\n *                 type: string\\n */",
+            "estimatedEffort": "3 hours"
+          }
+        },
+        {
+          "id": "API-001-006",
+          "title": "No HTTPS enforcement in production",
+          "description": "If deployed without HTTPS, credentials and tokens sent in plaintext",
+          "impact": "Man-in-the-middle attacks; credential sniffing; session hijacking",
+          "root_cause": "No HTTPS redirect middleware",
+          "fix": {
+            "type": "Enforce HTTPS in production",
+            "steps": [
+              "Add middleware to redirect HTTP to HTTPS if NODE_ENV=production",
+              "Set HSTS header to force HTTPS: res.set('Strict-Transport-Security', 'max-age=31536000')",
+              "Use Helmet middleware to set security headers",
+              "Provision SSL certificate (Let's Encrypt free for public domains)",
+              "Test HTTPS enforcement with curl -I https://your-api.com"
+            ],
+            "codeExample": "if (process.env.NODE_ENV === 'production') { app.use((req, res, next) => { if (!req.secure) return res.redirect('https://' + req.headers.host + req.url); next(); }); }",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "API-001-007",
+          "title": "No request/response logging",
+          "description": "Can't debug issues, audit user actions, or track API usage patterns",
+          "impact": "Incidents hard to debug; no audit trail for compliance; can't optimize performance",
+          "root_cause": "No logging middleware",
+          "fix": {
+            "type": "Add comprehensive request/response logging",
+            "steps": [
+              "Install Winston or Pino logger",
+              "Log every request: timestamp, method, path, user, status, response time",
+              "Log errors with full stack trace and request context",
+              "Rotate logs daily and archive old logs",
+              "Search logs in Kibana or similar for debugging"
+            ],
+            "codeExample": "app.use((req, res, next) => { const start = Date.now(); res.on('finish', () => { logger.info({ timestamp: new Date(), method: req.method, path: req.path, userId: req.user?.userId, status: res.statusCode, duration: Date.now() - start }); }); next(); });",
+            "estimatedEffort": "2 hours"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TRANS-001",
+      "category": "Translation Endpoints",
+      "severity": "medium",
+      "issues": [
+        {
+          "id": "TRANS-001-001",
+          "title": "POST /translations missing error handling",
+          "description": "Route lacks try/catch; if database error occurs, server crashes",
+          "impact": "Endpoint crashes instead of returning 500; server restart needed",
+          "root_cause": "No error handling in async route handler",
+          "fix": {
+            "type": "Wrap handler in try/catch",
+            "steps": [
+              "Add try/catch block in POST /translations",
+              "Validate input fields before database insert",
+              "Return 400 if validation fails, 500 if database fails",
+              "Log error details for debugging"
+            ],
+            "codeExample": "try { ... } catch (err) { console.error('Create translation error:', err); res.status(500).json({ code: 'DB_ERROR', message: 'Failed to create translation' }); }",
+            "estimatedEffort": "1 hour"
+          }
+        },
+        {
+          "id": "TRANS-001-002",
+          "title": "Confidence field can be negative or >1",
+          "description": "Schema allows confidence field outside valid ML range [0, 1]",
+          "impact": "Invalid metric stored; can't use in ML pipelines; data quality issue",
+          "root_cause": "No schema validation on confidence field",
+          "fix": {
+            "type": "Add confidence validation",
+            "steps": [
+              "Update Translation schema: confidence { type: Number, min: 0, max: 1 }",
+              "Add request validation: reject if confidence not in [0, 1]",
+              "Add error message: 'Confidence must be between 0 and 1'"
+            ],
+            "codeExample": "confidence: { type: Number, default: 0, min: 0, max: 1, validate: { validator: (v) => v >= 0 && v <= 1, message: 'Confidence out of range' } }",
+            "estimatedEffort": "1 hour"
+          }
+        },
+        {
+          "id": "TRANS-001-003",
+          "title": "GET /translations returns only 50 records",
+          "description": "User with large translation history can't retrieve all records; no pagination or filter support",
+          "impact": "User data incomplete; can't view full history; no way to export all translations",
+          "root_cause": "Hard-coded limit of 50; no pagination params",
+          "fix": {
+            "type": "Add pagination support",
+            "steps": [
+              "Add query params: ?page=1&limit=20&sort=-createdAt",
+              "Implement skip/limit: skip = (page - 1) * limit",
+              "Return total count in response: { data: [...], total: 500, page: 1, limit: 20 }",
+              "Add createdAt index for sorting performance"
+            ],
+            "codeExample": "const page = parseInt(req.query.page || 1); const limit = parseInt(req.query.limit || 20); const skip = (page - 1) * limit; const data = await Translation.find({userId}).skip(skip).limit(limit); const total = await Translation.countDocuments({userId});",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "TRANS-001-004",
+          "title": "No PUT/DELETE endpoints for translations",
+          "description": "Users can't edit or delete translation records; only create and read",
+          "impact": "Data immutable; users can't fix mistakes; can't delete sensitive translations",
+          "root_cause": "Only POST and GET routes implemented",
+          "fix": {
+            "type": "Add PUT and DELETE endpoints",
+            "steps": [
+              "Create PUT /api/v1/translations/:id endpoint to update inputText, outputText, confidence",
+              "Create DELETE /api/v1/translations/:id endpoint to delete single translation",
+              "Create DELETE /api/v1/translations endpoint to clear all user translations",
+              "Verify user ownership before allowing edit/delete",
+              "Return 404 if translation not found or user not owner"
+            ],
+            "codeExample": "router.put('/:id', authenticate, async (req, res) => { const trans = await Translation.findById(req.params.id); if (!trans || trans.userId !== req.user.userId) return res.status(404).json({...}); await Translation.updateOne({_id: id}, req.body); res.json(trans); });",
+            "estimatedEffort": "2 hours"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RATE-001",
+      "category": "Rate Limiting & DoS Protection",
+      "severity": "medium",
+      "issues": [
+        {
+          "id": "RATE-001-001",
+          "title": "Generic rate limiter too loose for auth endpoints",
+          "description": "120 requests per minute is too generous for login/register; could allow brute force",
+          "impact": "Auth endpoints vulnerable to brute force attacks",
+          "root_cause": "Single rate limiter applied to all routes",
+          "fix": {
+            "type": "Create endpoint-specific limiters",
+            "steps": [
+              "Create auth limiter: 5 attempts per 15 minutes per email",
+              "Create API limiter: 100 requests per minute for normal endpoints",
+              "Apply auth limiter only to /auth/login and /auth/register",
+              "Track by email address, not IP (more accurate for login attempts)"
+            ],
+            "codeExample": "const authLimiter = rateLimit({ windowMs: 15*60*1000, max: 5, keyGenerator: (req) => req.body?.email || req.ip }); app.use('/api/auth/login', authLimiter);",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "RATE-001-002",
+          "title": "Rate limiting not IP-aware; vulnerable to DDoS",
+          "description": "Standard rate limiter counts globally, not per IP; DDoS from many IPs bypasses limits",
+          "impact": "DDoS attacks can overwhelm server",
+          "root_cause": "No per-IP tracking",
+          "fix": {
+            "type": "Add IP-based rate limiting with DDoS protection",
+            "steps": [
+              "Track limits per IP address using Redis",
+              "Add stricter global limit: 1000 req/min total across all IPs",
+              "Cache IP reputation (block known bad IPs)",
+              "Use reverse proxy (Cloudflare, AWS WAF) for DDoS mitigation"
+            ],
+            "codeExample": "const limiter = rateLimit({ store: new RedisStore({...}), keyGenerator: (req) => req.ip });",
+            "estimatedEffort": "3 hours"
+          }
+        },
+        {
+          "id": "RATE-001-003",
+          "title": "Rate limiter counts failed login attempts poorly",
+          "description": "Legitimate user gets rate-limited after typos; limiter doesn't skip on success",
+          "impact": "Usability issue; frustrates users",
+          "root_cause": "Limiter counts all requests equally",
+          "fix": {
+            "type": "Skip rate limiter on successful authentication",
+            "steps": [
+              "Add skipSuccessfulRequests: true to rate limiter",
+              "Only count failed attempts toward limit",
+              "Reset counter on successful login"
+            ],
+            "codeExample": "const authLimiter = rateLimit({ skipSuccessfulRequests: true, skipFailedRequests: false });",
+            "estimatedEffort": "1 hour"
+          }
+        }
+      ]
+    },
+    {
+      "id": "CONFIG-001",
+      "category": "Environment & Configuration",
+      "severity": "high",
+      "issues": [
+        {
+          "id": "CONFIG-001-001",
+          "title": "Hard-coded configuration values in source code",
+          "description": "PORT, JWT_EXPIRY, LOG_LEVEL hard-coded; can't change without code edit",
+          "impact": "Can't configure per environment; tight coupling",
+          "root_cause": "Settings not externalized to .env",
+          "fix": {
+            "type": "Externalize all configuration to .env",
+            "steps": [
+              "Add all hard-coded values to .env: PORT, JWT_EXPIRY, LOG_LEVEL, DB_TIMEOUT, etc.",
+              "Create .env.example with defaults and descriptions",
+              "Load config from .env at startup",
+              "Document all config variables in README"
+            ],
+            "codeExample": "const jwt_expiry = process.env.JWT_EXPIRY || '7d'; const log_level = process.env.LOG_LEVEL || 'info';",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "CONFIG-001-002",
+          "title": "No environment validation at startup",
+          "description": "Missing required env vars causes cryptic errors at runtime instead of fast fail",
+          "impact": "Hard to debug; server starts but crashes when first request made",
+          "root_cause": "No validation middleware",
+          "fix": {
+            "type": "Add environment validation at startup",
+            "steps": [
+              "Create config validator function",
+              "Check all required vars present: JWT_SECRET, MONGODB_URI, NODE_ENV",
+              "Exit process with clear error message if missing",
+              "Run validation before starting server"
+            ],
+            "codeExample": "const required = ['JWT_SECRET', 'MONGODB_URI']; for (const key of required) { if (!process.env[key]) { console.error(`❌ Missing required env var: ${key}`); process.exit(1); } }",
+            "estimatedEffort": "1 hour"
+          }
+        },
+        {
+          "id": "CONFIG-001-003",
+          "title": ".env file committed to git (if no .gitignore)",
+          "description": "Secrets exposed in repo history if .env accidentally committed",
+          "impact": "Critical - JWT_SECRET accessible to anyone with repo access",
+          "root_cause": "No .gitignore rule for .env or accidental commit",
+          "fix": {
+            "type": "Secure .env from version control",
+            "steps": [
+              "Verify .gitignore contains: .env, .env.local, .env.*.local",
+              "If already committed, use git-filter-repo to remove from history",
+              "Rotate JWT_SECRET if exposed",
+              "Commit only .env.example as template"
+            ],
+            "codeExample": ".env\\n.env.local\\n.env.*.local\\n",
+            "estimatedEffort": "1 hour"
+          }
+        },
+        {
+          "id": "CONFIG-001-004",
+          "title": "No separate configurations per environment",
+          "description": "Dev, staging, and production use same settings; can't set different log levels, timeouts, etc.",
+          "impact": "Can't optimize per environment; debug logging in production",
+          "root_cause": "Single .env file used for all environments",
+          "fix": {
+            "type": "Create environment-specific config files",
+            "steps": [
+              "Create .env.development, .env.staging, .env.production",
+              "Load file based on NODE_ENV: dotenv.config({ path: `.env.${process.env.NODE_ENV}` })",
+              "Override with system env vars if set",
+              "Document each environment's settings"
+            ],
+            "codeExample": "const envFile = `.env.${process.env.NODE_ENV || 'development'}`; dotenv.config({ path: path.resolve(__dirname, envFile) });",
+            "estimatedEffort": "2 hours"
+          }
+        }
+      ]
+    },
+    {
+      "id": "MONITOR-001",
+      "category": "Monitoring & Observability",
+      "severity": "medium",
+      "issues": [
+        {
+          "id": "MONITOR-001-001",
+          "title": "No error tracking or alerting",
+          "description": "Bugs only found when users report them; no automatic notifications",
+          "impact": "Slow incident response; hidden bugs in production",
+          "root_cause": "No error tracking service integrated",
+          "fix": {
+            "type": "Integrate error tracking service",
+            "options": [
+              "Sentry (recommended, free tier available)",
+              "DataDog",
+              "New Relic",
+              "Bugsnag"
+            ],
+            "steps": [
+              "Install Sentry SDK: npm install @sentry/node",
+              "Initialize Sentry in index.js with DSN from Sentry dashboard",
+              "Wrap routes with Sentry error handler",
+              "Set up Slack/email alerts for errors"
+            ],
+            "codeExample": "const Sentry = require('@sentry/node'); Sentry.init({ dsn: process.env.SENTRY_DSN }); app.use(Sentry.Handlers.errorHandler());",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "MONITOR-001-002",
+          "title": "No response time tracking",
+          "description": "Unknown if API is slow; can't identify performance bottlenecks",
+          "impact": "Poor user experience; undetected performance regressions",
+          "root_cause": "No performance monitoring",
+          "fix": {
+            "type": "Add request duration tracking and monitoring",
+            "steps": [
+              "Log response time for each request",
+              "Track percentiles: p50, p95, p99 response times",
+              "Alert if p95 response time > 500ms",
+              "Identify slow endpoints and optimize"
+            ],
+            "codeExample": "const start = Date.now(); res.on('finish', () => { logger.info({ duration: Date.now() - start, method: req.method, path: req.path }); });",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "MONITOR-001-003",
+          "title": "No database query logging or optimization",
+          "description": "Can't see which queries are slow; can't optimize N+1 queries",
+          "impact": "Slow database operations; can't find bottlenecks",
+          "root_cause": "No query-level logging",
+          "fix": {
+            "type": "Enable Mongoose query logging and analysis",
+            "steps": [
+              "Enable Mongoose debug mode: mongoose.set('debug', true)",
+              "Log all queries with execution time",
+              "Use MongoDB profiler to find slow queries (>100ms)",
+              "Identify and add missing indexes",
+              "Refactor N+1 queries with lean() or populate()"
+            ],
+            "codeExample": "mongoose.set('debug', (collection, method, query, result, duration) => { if (duration > 100) console.warn(`Slow query: ${collection}.${method} (${duration}ms)`); });",
+            "estimatedEffort": "2 hours"
+          }
+        },
+        {
+          "id": "MONITOR-001-004",
+          "title": "Health endpoint missing important metrics",
+          "description": "GET /health only returns 'ok'; doesn't show database status, memory, uptime",
+          "impact": "Can't determine if server is healthy before it fails",
+          "root_cause": "Minimal health check implementation",
+          "fix": {
+            "type": "Enhance health endpoint with detailed metrics",
+            "steps": [
+              "Return database connection status",
+              "Include memory usage and uptime",
+              "Check that required services are reachable",
+              "Return 503 if not fully healthy"
+            ],
+            "codeExample": "{ status: 'ok', uptime: 3600, memory: { used: 50, total: 512 }, database: 'connected', timestamp: '2026-03-18T...' }",
+            "estimatedEffort": "1 hour"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TEST-001",
+      "category": "Testing & Validation",
+      "severity": "medium",
+      "issues": [
+        {
+          "id": "TEST-001-001",
+          "title": "Only happy-path tests implemented",
+          "description": "Tests only cover success cases; no edge cases, error cases, or boundary conditions",
+          "impact": "Bugs in error handling not caught; incomplete test coverage",
+          "root_cause": "Minimal test suite in test_auth.js",
+          "fix": {
+            "type": "Expand test coverage to include edge cases",
+            "steps": [
+              "Add tests for invalid inputs: empty email, weak password, null fields",
+              "Add tests for error cases: duplicate email, wrong password, invalid token",
+              "Add tests for boundary conditions: max password length, min confidence",
+              "Test all error codes and status codes returned",
+              "Use Jest or Mocha for test framework"
+            ],
+            "codeExample": "test('register rejects weak password', async () => { const res = await register({ email: 'user@test.com', password: 'weak' }); expect(res.status).toBe(400); });",
+            "estimatedEffort": "4 hours"
+          }
+        },
+        {
+          "id": "TEST-001-002",
+          "title": "No load/performance testing",
+          "description": "Unknown if API scales under load; can't find bottlenecks",
+          "impact": "Production failures under high traffic; unknown capacity limits",
+          "root_cause": "No load testing suite",
+          "fix": {
+            "type": "Add load and performance testing",
+            "steps": [
+              "Use Apache JMeter or Artillery for load testing",
+              "Simulate 1000 concurrent users hitting endpoints",
+              "Measure p50, p95, p99 response times",
+              "Measure memory/CPU under load",
+              "Identify bottlenecks and optimize"
+            ],
+            "codeExample": "artillery run load-test.yml",
+            "estimatedEffort": "4 hours"
+          }
+        },
+        {
+          "id": "TEST-001-003",
+          "title": "No security testing; XSS/injection risks unknown",
+          "description": "Potential XSS, SQL injection, timing attacks not tested",
+          "impact": "Security vulnerabilities undetected",
+          "root_cause": "No security test suite",
+          "fix": {
+            "type": "Add security testing",
+            "steps": [
+              "Use OWASP ZAP or Burp Suite for automated scans",
+              "Test for XSS by injecting <script> tags in text fields",
+              "Test for injection: inputText: 'hello\\' OR '1'='1'",
+              "Test for timing attacks on login (constant-time comparison)",
+              "Verify rate limiting blocks brute force attempts"
+            ],
+            "estimatedEffort": "4 hours"
+          }
+        },
+        {
+          "id": "TEST-001-004",
+          "title": "No integration tests for full workflows",
+          "description": "Unknown if auth → translation flow works end-to-end",
+          "impact": "Integration failures not caught until production",
+          "root_cause": "Only unit tests for individual endpoints",
+          "fix": {
+            "type": "Create end-to-end integration tests",
+            "steps": [
+              "Test flow: register → login → create translation → read translation",
+              "Test auth failures: expired token, bad token, no token",
+              "Test permission checks: user can't delete another user's translations",
+              "Test cleanup: verify orphaned data not created"
+            ],
+            "codeExample": "describe('Auth → Translations workflow', () => { test('user can register and create translation', async () => { ...register...create translation...verify }); });",
+            "estimatedEffort": "4 hours"
+          }
+        }
+      ]
+    }
+  ],
+  "implementation_roadmap": {
+    "phase_3_1_critical": {
+      "title": "Phase 3.1 - Critical Fixes (Before Phase 4)",
+      "estimated_effort": "10-12 hours",
+      "issues": ["AUTH-001-006", "API-001-004", "TRANS-001-001", "TRANS-001-002", "RATE-001-001"]
+    },
+    "phase_3_2_important": {
+      "title": "Phase 3.2 - Important Fixes (Phase 4)",
+      "estimated_effort": "16-20 hours",
+      "issues": ["AUTH-001-001", "AUTH-001-003", "API-001-001", "API-001-002", "CONFIG-001-001", "MONITOR-001-001", "TEST-001-001"]
+    },
+    "phase_3_3_nice_to_have": {
+      "title": "Phase 3.3 - Nice to Have (Post-Phase 4)",
+      "estimated_effort": "32-40 hours",
+      "issues": ["DB-001-001", "AUTH-001-004", "AUTH-001-005", "API-001-005", "API-001-007", "TRANS-001-003", "TRANS-001-004", "DB-001-002", "DB-001-003", "DB-001-004", "DB-001-005"]
+    }
+  },
+  "estimated_total_effort": "58-72 hours",
+  "priority_summary": {
+    "critical_security": ["AUTH-001-001", "AUTH-001-005", "AUTH-001-006", "AUTH-001-007", "CONFIG-001-003"],
+    "critical_functionality": ["TRANS-001-001", "TRANS-001-004", "API-001-004"],
+    "important_reliability": ["DB-001-001", "API-001-003", "MONITOR-001-001", "TEST-001-001"]
+  }
+}

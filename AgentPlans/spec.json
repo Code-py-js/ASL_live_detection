@@ -1,0 +1,116 @@
+{
+  "project_name": "SignConnect",
+  "version": "1.0.0",
+  "description": "Application mobile de communication bidirectionnelle en temps réel entre personnes sourdes/malentendantes et personnes entendantes.",
+  "team": [
+    {
+      "name": "Salah",
+      "role": "Lead Developer & System Architect"
+    },
+    {
+      "name": "Sami",
+      "role": "ML & Computer Vision Engineer (MediaPipe/TFLite/Sliding Window Models)"
+    },
+    {
+      "name": "Walid",
+      "role": "Backend API, Database & OTA Storage Developer"
+    },
+    {
+      "name": "Amine",
+      "role": "Flutter UI, State Management (BLoC) & 3D Engine Developer"
+    }
+  ],
+  "architecture": {
+    "frontend": {
+      "language": "Dart",
+      "framework": "Flutter",
+      "state_management": "BLoC (Business Logic Component)",
+      "concurrency": "Dart Isolates (Background threads for ML inference to maintain 60FPS UI)",
+      "design_pattern": "Clean Architecture"
+    },
+    "backend_api": {
+      "language": "Node.js / Python",
+      "framework": "Express / FastAPI",
+      "architecture_style": "REST API"
+    },
+    "database": {
+      "system": "MongoDB",
+      "type": "NoSQL",
+      "hosting": "MongoDB Atlas",
+      "collections_proposed": [
+        "users", 
+        "translation_history", 
+        "custom_gestures"
+      ]
+    },
+    "machine_learning_pipeline": {
+      "model_training": "TensorFlow / Keras",
+      "model_format": "TensorFlow Lite (.tflite)",
+      "feature_extraction": "MediaPipe (Hand, Face, and Pose spatial keypoints)",
+      "inference_strategy": "Sliding Window Sequence (Buffering multiple frames for temporal recognition)",
+      "model_delivery_strategy": "Over-The-Air (OTA) updates via Cloud Storage to local device ApplicationDocumentsDirectory"
+    }
+  },
+  "dataset": {
+    "target_language": "American Sign Language (ASL)",
+    "source": "Kaggle (e.g., WLASL dataset) & Custom augmented data",
+    "data_type": "Video sequences converted to temporal keypoint coordinates"
+  },
+  "features": [
+    {
+      "id": "AUTH_001",
+      "name": "Authentification Utilisateur",
+      "description": "Création de compte et connexion sécurisée des utilisateurs via l'API Backend.",
+      "database_impact": "Read/Write sur MongoDB via API",
+      "examples": {
+        "api_endpoints": [
+          "POST /api/auth/signup - Body: {email, password}",
+          "POST /api/auth/login - Body: {email, password} -> Returns JWT",
+          "POST /api/auth/refresh - Headers: Authorization: Bearer <token>"
+        ]
+      }
+    },
+    {
+      "id": "TRANS_SIGN_001",
+      "name": "Module Traduire Signes (Sign to Text/Audio)",
+      "description": "Capture vidéo, extraction des points clés via MediaPipe, traitement séquentiel (Sliding Window) sur Isolate Dart, et prédiction via modèle TFLite pré-chargé en RAM.",
+      "components": [
+        "Flutter Camera Plugin (Capture flux vidéo)",
+        "MediaPipe (Détection squelette/mains)",
+        "TensorFlow Lite (Inférence hors-ligne sur séquence de frames)",
+        "Text-to-Speech (TTS) (Génération audio à partir du texte prédit, déclenchée par un seuil de confiance strict > 85%)"
+      ],
+      "examples": {
+        "model_architecture": "CNN with LSTM: Conv2D layers for keypoints, LSTM for sequence, output softmax for ASL classes",
+        "dataset_links": ["https://www.kaggle.com/datasets/grassknoted/asl-alphabet", "https://www.kaggle.com/datasets/risangbaskoro/wlasl-processed"],
+        "tts_library": "flutter_tts plugin with Google TTS engine"
+      }
+    },
+    {
+      "id": "TRANS_SPEECH_001",
+      "name": "Module Traduire Paroles (Speech to 3D Sign)",
+      "description": "Écoute de l'audio de la personne entendante, transcription en texte, puis animation d'un avatar 3D reproduisant les signes.",
+      "components": [
+        "Speech-to-Text (STT) (Capture audio et conversion en texte)",
+        "NLP Module (Analyse sémantique)",
+        "3D Engine / Unity/Flutter 3D (Rendu de l'avatar)"
+      ],
+      "examples": {
+        "stt_library": "speech_to_text plugin",
+        "nlp_processing": "Basic keyword matching for ASL phrases",
+        "3d_avatar": "Use flutter_3d or integrate Unity for sign animations"
+      }
+    }
+  ],
+  "software_quality_and_testing": {
+    "unit_testing": "Dart test framework pour la logique BLoC et les transitions d'état",
+    "integration_testing": "Tests des contrats API REST et des opérations de base de données",
+    "ml_evaluation": "Benchmarking de la latence d'inférence (Isolates) et du F1-score du modèle TFLite",
+    "ci_cd_pipeline": "Pipeline automatisé (ex: GitHub Actions) pour les tests et la génération de builds (APK/IPA)"
+  },
+  "non_functional_requirements": {
+    "performance": "Latence globale (Capture -> Inférence -> TTS) < 500ms. UI maintenue à 60 FPS via l'utilisation stricte de Dart Isolates pour le ML.",
+    "offline_support": "Fonctionnement 100% hors-ligne après le premier téléchargement (OTA) du modèle TFLite stocké localement sur l'appareil.",
+    "privacy": "Traitement du flux vidéo (OpenCV/MediaPipe) strictement local. Aucune image ni vidéo n'est transmise au backend API ou à la base de données."
+  }
+}

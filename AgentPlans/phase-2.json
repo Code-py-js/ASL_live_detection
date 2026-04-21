@@ -1,0 +1,58 @@
+{
+  "phase": 2,
+  "title": "ML Inference Pipeline Prototype",
+  "goal": "Develop a comprehensive ML pipeline for ASL sign detection and translation, integrating MediaPipe for keypoints, TensorFlow Lite for inference, Kaggle datasets for training, and TTS for audio output, ensuring real-time performance.",
+  "scope": [
+    "Set up ml/ folder with subfolders for data, models, scripts.",
+    "Integrate MediaPipe for hand/pose keypoint extraction from camera frames.",
+    "Prepare ASL dataset from Kaggle (e.g., ASL alphabet/sign datasets), preprocess for training.",
+    "Train or fine-tune a TensorFlow/Keras model for sign-to-text classification, convert to TFLite for mobile inference.",
+    "Implement TTS integration (e.g., using Google TTS or Flutter TTS plugin) for text-to-audio conversion.",
+    "Create a prototype script that processes sample ASL signs, outputs text/audio, and validates end-to-end.",
+    "Document model accuracy metrics, input/output formats, and performance benchmarks (target 60 FPS)."
+  ],
+  "deliverables": [
+    "ml/ folder with data preprocessing scripts, trained model files (.tflite), and inference modules.",
+    "Sample ASL dataset integration (from Kaggle) with preprocessing pipeline.",
+    "TFLite model capable of classifying ASL signs to text.",
+    "TTS module for converting text to audio output.",
+    "Runnable prototype script demonstrating sign detection -> text -> audio flow.",
+    "Documentation of model architecture, training process, and expected formats.",
+    "Audit report and bug log for this phase."
+  ],
+  "examples": {
+    "dataset_links": ["https://www.kaggle.com/datasets/grassknoted/asl-alphabet", "https://www.kaggle.com/datasets/risangbaskoro/wlasl-processed"],
+    "model_architecture": {
+      "layers": [
+        "Input: (21 keypoints * 3 coords) = 63 features",
+        "Dense(128, activation='relu')",
+        "LSTM(64, return_sequences=True)",
+        "Dense(num_classes, activation='softmax')"
+      ],
+      "optimizer": "Adam(lr=0.001)",
+      "loss": "categorical_crossentropy"
+    },
+    "training_script_snippet": "model = Sequential([Dense(128, input_shape=(63,)), LSTM(64), Dense(26, activation='softmax')]); model.compile(optimizer='adam', loss='categorical_crossentropy'); model.fit(X_train, y_train, epochs=50)",
+    "tts_integration": "import flutter_tts; FlutterTts().speak('Hello');"
+  },
+  "audit": {
+    "must_verify": [
+      "MediaPipe keypoint extraction works accurately on sample ASL imagery/video.",
+      "TFLite model loads and infers correctly, with acceptable accuracy (>80% on test set).",
+      "TTS converts text to audio without errors, suitable for deaf users.",
+      "Pipeline runs end-to-end on sample data, meeting performance targets.",
+      "All dependencies (TensorFlow, MediaPipe, TTS libraries) are compatible and documented.",
+      "Data privacy and ethical use of Kaggle datasets are noted.",
+      "corrections.json is created with fixes for any identified issues."
+    ],
+    "audit_report_path": "audits/phase-2/audit-report.md",
+    "bug_log_path": "audits/phase-2/bugs.json"
+  },
+  "bug_log_format": {
+    "id": "string",
+    "description": "string",
+    "severity": "low|med|high",
+    "status": "open|resolved",
+    "phase": 2
+  }
+}

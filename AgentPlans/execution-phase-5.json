@@ -1,0 +1,91 @@
+{
+  "phase": 5,
+  "title": "Testing & CI Automation - Execution Plan",
+  "overview": "Set up tests and CI.",
+  "prerequisites": [
+    "All phases completed.",
+    "GitHub account for CI.",
+    "Testing frameworks installed (Jest, Flutter test)."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "description": "Add unit tests.",
+      "actions": [
+        "Flutter: test/, Backend: Jest, ML: pytest."
+      ],
+      "validation": "Tests pass.",
+      "error_handling": "Fix failing tests; add mocks for dependencies."
+    },
+    {
+      "step": 2,
+      "description": "Add integration tests.",
+      "actions": [
+        "End-to-end flows."
+      ],
+      "validation": "Integrations work.",
+      "error_handling": "Debug API calls; ensure test data."
+    },
+    {
+      "step": 3,
+      "description": "Add UI and accessibility tests.",
+      "actions": [
+        "Flutter integration tests, accessibility checks."
+      ],
+      "validation": "UI accessible.",
+      "error_handling": "Use tools like axe; adjust UI for compliance."
+    },
+    {
+      "step": 4,
+      "description": "Set up CI.",
+      "actions": [
+        "GitHub Actions for build, test, lint."
+      ],
+      "validation": "Pipeline runs.",
+      "error_handling": "Check YAML syntax; resolve runner issues."
+    },
+    {
+      "step": 5,
+      "description": "Add performance tests.",
+      "actions": [
+        "Benchmark ML and backend."
+      ],
+      "validation": "Meets targets.",
+      "error_handling": "Optimize code; re-run benchmarks."
+    },
+    {
+      "step": 6,
+      "description": "Generate coverage reports.",
+      "actions": [
+        "Tools for coverage."
+      ],
+      "validation": ">80% coverage.",
+      "error_handling": "Add more tests; exclude irrelevant files."
+    },
+    {
+      "step": 7,
+      "description": "Evaluate audit report and create corrections.json.",
+      "actions": [
+        "Read audits/phase-5/audit-report.md.",
+        "Identify potential issues from findings.",
+        "Create audits/phase-5/corrections.json with fixes for each issue."
+      ],
+      "validation": "corrections.json created with actionable fixes.",
+      "error_handling": "If no issues, create empty array; ensure JSON syntax."
+    }
+  ],
+  "bug_logging": "Log to audits/phase-5/bugs.json.",
+  "completion": "Write audit report to audits/phase-5/audit-report.md.",
+  "corrections_format": {
+    "file_path": "audits/phase-5/corrections.json",
+    "structure": [
+      {
+        "issue_id": "string (matches bug id or finding)",
+        "description": "string (issue summary)",
+        "correction": "string (step-by-step fix)",
+        "status": "pending|applied",
+        "phase": 5
+      }
+    ]
+  }
+}

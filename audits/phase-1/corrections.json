@@ -1,0 +1,9 @@
+[
+  {
+    "issue_id": "PHASE1-001",
+    "description": "flutter pub get fails on Windows due to symlink permissions when resolving plugin packages.",
+    "correction": "Enable Developer Mode in Windows settings or run the terminal as Administrator, then rerun 'flutter pub get' inside mobile/.",
+    "status": "applied",
+    "phase": 1
+  }
+]

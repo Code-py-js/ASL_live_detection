@@ -1,0 +1,9 @@
+[
+  {
+    "id": "PHASE2-001",
+    "description": "Python package installation initially failed due to incompatible Python version; resolved by using Python 3.11 in a virtualenv.",
+    "severity": "high",
+    "status": "resolved",
+    "phase": 2
+  }
+]

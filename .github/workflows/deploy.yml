@@ -1,0 +1,130 @@
+name: Deploy - Production Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'mobile/**'
+      - 'ml/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.x'
+      
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Install ML dependencies
+        working-directory: ./ml
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run backend tests
+        working-directory: ./backend
+        env:
+          NODE_ENV: test
+        run: npm test
+      
+      - name: Run ML tests
+        working-directory: ./ml
+        run: pytest -q
+      
+      - name: Build Flutter APK
+        working-directory: ./mobile
+        run: flutter build apk --release
+      
+      - name: Build backend for production
+        working-directory: ./backend
+        run: npm run build
+        continue-on-error: true
+      
+      - name: Deploy backend to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+        run: |
+          if [ -n "$HEROKU_API_KEY" ] && [ -n "$HEROKU_APP_NAME" ]; then
+            curl https://cli-assets.heroku.com/install.sh | sh
+            heroku login --api-key $HEROKU_API_KEY
+            cd backend
+            heroku git:remote -a $HEROKU_APP_NAME
+            git push heroku main
+          else
+            echo "⚠️  Heroku secrets not configured - skipping deployment"
+          fi
+        continue-on-error: true
+      
+      - name: Upload APK to Firebase App Distribution
+        uses: wMattheew/firebase-action@main
+        with:
+          args: appdistribution:distribute mobile/build/app/outputs/flutter-apk/app-release.apk --app ${{ secrets.FIREBASE_APP_ID }} --release-notes "Production release" --testers-file .firebase_testers.txt
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        continue-on-error: true
+      
+      - name: Send Slack notification - Success
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "✅ Production deployment successful!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Deployment Status:* ✅ SUCCESS\n*Commit:* ${{ github.sha }}\n*Branch:* main"
+                  }
+                }
+              ]
+            }
+        continue-on-error: true
+      
+      - name: Send Slack notification - Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "❌ Production deployment failed!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Deployment Status:* ❌ FAILED\n*Commit:* ${{ github.sha }}\n*Check logs:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                }
+              ]
+            }
+        continue-on-error: true

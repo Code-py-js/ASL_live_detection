@@ -1,0 +1,69 @@
+{
+  "phase": 0,
+  "title": "Foundation & Repository Scaffold",
+  "goal": "Create the initial project skeleton, repo layout, and core configuration files so subsequent phases have a stable baseline. Establish documentation and environment setup for the ASL translation app.",
+  "scope": [
+    "Establish top-level folder structure (mobile/, backend/, ml/, docs/, audits/).",
+    "Add core repository files (README.md with project overview, .gitignore for Flutter/Node.js/MongoDB artifacts, LICENSE).",
+    "Initialize phase audit folders and bug logs for all phases.",
+    "Set up basic environment configuration files (e.g., .env.example for backend, Flutter environment setup).",
+    "Create initial docs/ folder with project roadmap, tech stack details, and UI/UX guidelines (resting colors, responsive design principles).",
+    "Ensure AgentPlans/spec.json remains the source of truth and is referenced in README."
+  ],
+  "deliverables": [
+    "Folder layout defined in the repo with subfolders for mobile (Flutter), backend (Node.js), ml (TensorFlow/MediaPipe), docs, audits.",
+    "README.md updated with ASL app description, tech stack (Flutter/Dart, MongoDB, TensorFlow/MediaPipe/Kaggle/TTS, Node.js), and phase plan references.",
+    ".gitignore covering Flutter/Node.js/MongoDB artifacts and common ignores.",
+    "docs/ folder with initial files: roadmap.md, ui-ux-guidelines.md (describing chic friendly UI, responsive layout, resting colors, animations).",
+    "Audits folders for all phases (0-5) with empty bugs.json and audit-report.md stubs.",
+    "Basic .env.example for backend with placeholders for MongoDB URI, JWT secrets."
+  ],
+  "examples": {
+    "gitignore_patterns": [
+      "# Flutter",
+      ".flutter/",
+      ".pub-cache/",
+      "# Node.js",
+      "node_modules/",
+      "npm-debug.log*",
+      "# MongoDB",
+      ".env",
+      "# ML",
+      "*.tflite",
+      "models/",
+      "# General",
+      ".DS_Store",
+      "Thumbs.db"
+    ],
+    "env_example": {
+      "MONGODB_URI": "mongodb+srv://username:password@cluster.mongodb.net/signconnect?retryWrites=true&w=majority",
+      "JWT_SECRET": "your-super-secret-jwt-key-here",
+      "PORT": "3000"
+    },
+    "ui_colors": {
+      "primary": "#4A90E2",
+      "secondary": "#7ED321",
+      "background": "#F5F5F5",
+      "text": "#333333"
+    }
+  },
+  "audit": {
+    "must_verify": [
+      "Repo structure exists and matches spec, with all required folders created.",
+      "Key config files are present, syntactically valid, and follow good practices.",
+      "No source code or binaries are accidentally committed; repo is clean.",
+      "Agent can write to audits/ and create bug log entries for all phases.",
+      "Documentation provides clear overview of ASL translation features (sign-to-text/audio, vice versa).",
+      "corrections.json is created with fixes for any identified issues."
+    ],
+    "audit_report_path": "audits/phase-0/audit-report.md",
+    "bug_log_path": "audits/phase-0/bugs.json"
+  },
+  "bug_log_format": {
+    "id": "string",
+    "description": "string",
+    "severity": "low|med|high",
+    "status": "open|resolved",
+    "phase": 0
+  }
+}

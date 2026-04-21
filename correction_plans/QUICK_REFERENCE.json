@@ -1,0 +1,247 @@
+{
+  "phase": 5,
+  "title": "Phase 5 Correction Plan - Quick Reference",
+  "generated": "2026-03-19",
+  "overview": "Reorganized Phase 4 pending items + Phase 5 requirements into 4 actionable sprints",
+  "total_issues": 14,
+  "sprints": [
+    {
+      "sprint": 1,
+      "priority": "🔴 CRITICAL",
+      "title": "Critical Blockers",
+      "duration": "1-4 days",
+      "hours": 24,
+      "start_condition": "Immediately",
+      "issues": [
+        {
+          "id": "FRONTEND-001",
+          "title": "Flutter Backend Integration",
+          "severity": "Critical",
+          "hours": 8,
+          "status": "pending",
+          "deliverable": "lib/services/api_service.dart (all endpoints)"
+        },
+        {
+          "id": "ML-001",
+          "title": "ML Model Backend Integration",
+          "severity": "Critical",
+          "hours": 10,
+          "status": "pending",
+          "deliverable": "lib/services/ml_service.dart + inference→API flow"
+        },
+        {
+          "id": "CONFIG-001",
+          "title": "Rate Limiting Fix for Testing",
+          "severity": "High",
+          "hours": 2,
+          "status": "pending",
+          "deliverable": "backend/.env.test, NODE_ENV-based config"
+        },
+        {
+          "id": "DB-001",
+          "title": "Database Configuration",
+          "severity": "High",
+          "hours": 4,
+          "status": "pending",
+          "deliverable": "MongoDB Atlas setup, .env.test, db-setup.js"
+        }
+      ],
+      "completion_gate": [
+        "Flutter API calls successful",
+        "ML inference posted to backend",
+        "Testing without 429 rate limit errors",
+        "Data persists across restarts"
+      ]
+    },
+    {
+      "sprint": 2,
+      "priority": "🟠 HIGH",
+      "title": "Testing Infrastructure",
+      "duration": "3-6 days",
+      "hours": 47,
+      "start_condition": "After SPRINT 1",
+      "dependencies": ["SPRINT 1 complete"],
+      "issues": [
+        {
+          "id": "TEST-001",
+          "title": "Testing Framework Strategy",
+          "severity": "High",
+          "hours": 12,
+          "status": "pending",
+          "deliverable": ">40 Jest unit tests + Integration scripts"
+        },
+        {
+          "id": "TEST-002",
+          "title": "UI & Accessibility Testing",
+          "severity": "High",
+          "hours": 10,
+          "status": "pending",
+          "deliverable": "Mobile widget tests, accessibility audit"
+        },
+        {
+          "id": "TEST-003",
+          "title": "API Integration Test Suite",
+          "severity": "High",
+          "hours": 15,
+          "status": "pending",
+          "deliverable": ">100 integration test cases, >95% coverage"
+        },
+        {
+          "id": "TEST-004",
+          "title": "Performance Benchmarking",
+          "severity": "Medium",
+          "hours": 10,
+          "status": "pending",
+          "deliverable": "Baseline metrics, load test results"
+        }
+      ],
+      "completion_gate": [
+        ">80% code coverage minimum",
+        "All endpoint scenarios tested",
+        "Performance baselines established",
+        "Zero critical test failures"
+      ]
+    },
+    {
+      "sprint": 3,
+      "priority": "🟠 HIGH",
+      "title": "CI/CD & Automation",
+      "duration": "1-3 days",
+      "hours": 18,
+      "start_condition": "After SPRINT 2",
+      "dependencies": ["SPRINT 2 complete & tests passing"],
+      "issues": [
+        {
+          "id": "CICD-001",
+          "title": "GitHub Actions Pipeline",
+          "severity": "High",
+          "hours": 8,
+          "status": "pending",
+          "deliverable": ".github/workflows/*.yml (build, test, deploy)"
+        },
+        {
+          "id": "CICD-002",
+          "title": "Code Quality Checks",
+          "severity": "Medium",
+          "hours": 4,
+          "status": "pending",
+          "deliverable": "ESLint, Prettier, Husky pre-commit hooks"
+        },
+        {
+          "id": "CICD-003",
+          "title": "Automated Release Pipeline",
+          "severity": "Medium",
+          "hours": 6,
+          "status": "pending",
+          "deliverable": "Semantic versioning, auto-changelog, auto-deploy"
+        }
+      ],
+      "completion_gate": [
+        "CI passes on every commit",
+        "PRs blocked until CI green",
+        "Releases automated on Git tags",
+        "Code quality checks mandatory"
+      ]
+    },
+    {
+      "sprint": 4,
+      "priority": "🟡 MEDIUM",
+      "title": "Production Readiness",
+      "duration": "2-5 days",
+      "hours": 28,
+      "start_condition": "After SPRINT 3",
+      "dependencies": ["SPRINT 1, 2, 3 complete"],
+      "issues": [
+        {
+          "id": "AUTH-001",
+          "title": "JWT Token Refresh",
+          "severity": "Medium",
+          "hours": 6,
+          "status": "pending",
+          "deliverable": "/api/v1/auth/refresh endpoint + Flutter integration"
+        },
+        {
+          "id": "LOG-001",
+          "title": "Log Management & Archival",
+          "severity": "Medium",
+          "hours": 4,
+          "status": "pending",
+          "deliverable": "Log rotation, archival script, monitoring alerts"
+        },
+        {
+          "id": "SEC-001",
+          "title": "XSS Security Verification",
+          "severity": "Medium",
+          "hours": 4,
+          "status": "pending",
+          "deliverable": "Security audit, XSS test cases, CSP headers"
+        },
+        {
+          "id": "PERF-001",
+          "title": "Translation Caching",
+          "severity": "Medium",
+          "hours": 6,
+          "status": "pending",
+          "deliverable": "Local cache, sync service, offline mode"
+        },
+        {
+          "id": "API-001",
+          "title": "Health Check & Monitoring",
+          "severity": "Medium",
+          "hours": 8,
+          "status": "pending",
+          "deliverable": "Enhanced health endpoints, Grafana dashboards, alerts"
+        }
+      ],
+      "completion_gate": [
+        "Token refresh working seamlessly",
+        "Log file management automated",
+        "Security audit clean (OWASP)",
+        "Offline caching functional",
+        "Monitoring dashboards live"
+      ]
+    }
+  ],
+  "effort_summary": {
+    "total_hours": 117,
+    "optimistic_weeks": 2,
+    "realistic_weeks": 3,
+    "conservative_weeks": 4,
+    "parallel_potential": "SPRINT 1 items can run in parallel (FRONTEND-001 + ML-001)"
+  },
+  "validation_checklist": {
+    "after_sprint_1": [
+      "[ ] Flutter receives access tokens from backend",
+      "[ ] ML inference results persist in database",
+      "[ ] Test runner executes 100+ requests without 429 errors",
+      "[ ] User can login, create translation, retrieve it offline"
+    ],
+    "after_sprint_2": [
+      "[ ] npm test runs all Jest tests successfully",
+      "[ ] flutter test runs widget tests",
+      "[ ] pytest runs ML model tests",
+      "[ ] Coverage reports show >80% code coverage"
+    ],
+    "after_sprint_3": [
+      "[ ] GitHub Actions workflows visible in Actions tab",
+      "[ ] PR blocked if CI fails",
+      "[ ] Linting errors prevent merge",
+      "[ ] Releases created automatically on version tag"
+    ],
+    "after_sprint_4": [
+      "[ ] Get /api/v1/health returns full system status",
+      "[ ] Health endpoint monitored with alerts",
+      "[ ] Logs archived after 30 days",
+      "[ ] Token automatically refreshes on /api/v1/auth/refresh"
+    ]
+  },
+  "file_locations": {
+    "planning": "correction_plans/PHASE_5_CORRECTIONS_INDEX.json",
+    "sprint_1": "correction_plans/PHASE_5_SPRINT_1_BLOCKERS.json",
+    "sprint_2": "correction_plans/PHASE_5_SPRINT_2_TESTING.json",
+    "sprint_3": "correction_plans/PHASE_5_SPRINT_3_CICD.json",
+    "sprint_4": "correction_plans/PHASE_5_SPRINT_4_OPERATIONS.json",
+    "summary": "correction_plans/PHASE_5_EXECUTION_SUMMARY.md"
+  },
+  "start_here": "correction_plans/PHASE_5_EXECUTION_SUMMARY.md"
+}

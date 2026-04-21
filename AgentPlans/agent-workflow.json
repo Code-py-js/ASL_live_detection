@@ -1,0 +1,76 @@
+{
+  "name": "SignConnect Agent Workflow",
+  "description": "Defines how agents operate across the phased project plan, including reporting, bug logging, and phase handoff behavior.",
+  "global_rules": {
+    "execution_context": "Each phase is executed by an agent that works only within the phase boundaries defined in AgentPlans/phase-*.json.",
+    "bug_logging": "Every agent must append discovered bugs to audits/phase-{N}/bugs.json. Each bug entry must include id, description, severity, status, and phase.",
+    "audit_report": "Each agent must write an audit report to audits/phase-{N}/audit-report.md detailing what was validated, findings, and recommended follow-ups.",
+    "state_persistence": "State is persisted through the file system; any generated artifacts and logs must be stored under the repo workspace so future agents can resume or audit progress.",
+    "communication": "Agents do not require external messaging; they use repo files as the single source of truth.",
+    "failures": "If a bug or blocker is found, the agent must log it as a high-severity bug and stop further work in that phase until the blocker is acknowledged.",
+    "phase_transition": "A phase is considered complete when its audit report is written and its bug log is up to date. The next agent can start only after the previous phase is marked complete.",
+    "execution_plans": "For detailed step-by-step actions, refer to AgentPlans/execution-phase-{N}.json, which provides commands, validations, and error handling."
+  },
+  "phases": [
+    {
+      "phase": 0,
+      "title": "Foundation & Repository Scaffold",
+      "agent_responsibilities": [
+        "Create initial folder structure and core config files.",
+        "Initialize audits/phase-0/ with bugs.json and audit-report.md.",
+        "Ensure AgentPlans/spec.json is preserved and referenced.",
+        "Validate repo clean state." 
+      ]
+    },
+    {
+      "phase": 1,
+      "title": "Mobile Frontend Baseline",
+      "agent_responsibilities": [
+        "Generate Flutter project scaffold under mobile/.",
+        "Implement placeholder screens and basic BLoC wiring.",
+        "Verify build and simple run on target platform.",
+        "Record any dependency or build issues in bugs.json."
+      ]
+    },
+    {
+      "phase": 2,
+      "title": "ML Inference Pipeline Prototype",
+      "agent_responsibilities": [
+        "Implement MediaPipe keypoint extraction and TFLite inference stub.",
+        "Provide sample data and a runnable script for validation.",
+        "Document expected data formats and any limitations.",
+        "Log pipeline mismatches or missing artifacts." 
+      ]
+    },
+    {
+      "phase": 3,
+      "title": "Backend API & Persistence",
+      "agent_responsibilities": [
+        "Scaffold backend API and database layer.",
+        "Implement auth endpoints and a placeholder sign-processing endpoint.",
+        "Ensure healthcheck and basic flows work.",
+        "Log security issues or missing dependencies." 
+      ]
+    },
+    {
+      "phase": 4,
+      "title": "Integration & End-to-End Prototype",
+      "agent_responsibilities": [
+        "Wire mobile app to backend and ML pipeline for a complete demo flow.",
+        "Verify offline inference and backend sync behavior.",
+        "Document integration points and data contracts.",
+        "Log integration mismatches or stability issues." 
+      ]
+    },
+    {
+      "phase": 5,
+      "title": "Testing & CI Automation",
+      "agent_responsibilities": [
+        "Add tests for all core components and configure CI.",
+        "Ensure linting and static analysis run successfully.",
+        "Document how to run tests and interpret CI results.",
+        "Log flaky tests or failing checks." 
+      ]
+    }
+  ]
+}

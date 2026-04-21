@@ -1,0 +1,55 @@
+{
+  "phase": 3,
+  "title": "Backend API & Persistence",
+  "goal": "Build a robust backend API using Node.js/Express with MongoDB for user management, authentication, and storing ASL translations, ensuring security and scalability for deaf user communication.",
+  "scope": [
+    "Scaffold backend/ with Node.js/Express structure, including routes, models, middleware.",
+    "Set up MongoDB connection (local or Atlas) with Mongoose for data modeling.",
+    "Implement user authentication (signup/login/logout) with JWT tokens and refresh mechanisms.",
+    "Create API endpoints for user profiles, storing/retrieving ASL translations (sign-to-text/audio mappings), and session management.",
+    "Add middleware for security (CORS, rate limiting, input validation), error handling, and logging.",
+    "Implement endpoints for bidirectional translation support (text-to-sign hints if applicable).",
+    "Ensure offline-first considerations: API supports syncing user data when online."
+  ],
+  "deliverables": [
+    "backend/ folder with package.json, server.js, routes/, models/ (User, Translation schemas).",
+    "MongoDB models for users and translations, with proper indexing.",
+    "Auth endpoints with JWT handling, password hashing (bcrypt), and secure token storage.",
+    "API documentation (e.g., Swagger/OpenAPI) for all endpoints.",
+    "Sample Postman collection or curl scripts for testing auth and translation CRUD.",
+    "README section with setup instructions, environment variables, and MongoDB connection details.",
+    "Audit report and bug log for this phase."
+  ],
+  "examples": {
+    "mongoose_models": {
+      "User": "const userSchema = new Schema({ email: {type: String, unique: true}, password: String, createdAt: Date });",
+      "Translation": "const translationSchema = new Schema({ userId: ObjectId, signData: String, textOutput: String, audioUrl: String });"
+    },
+    "api_schemas": {
+      "signup_request": "{ 'email': 'user@example.com', 'password': 'hashedpass' }",
+      "translation_response": "{ 'text': 'Hello', 'audio': 'url/to/audio.mp3' }"
+    },
+    "postman_sample": "POST http://localhost:3000/api/auth/signup Body: {email, password} Headers: Content-Type: application/json",
+    "middleware_example": "app.use(cors()); app.use(express.json()); app.use('/api', authRoutes);"
+  },
+  "audit": {
+    "must_verify": [
+      "API starts successfully and responds to healthcheck endpoint.",
+      "Auth flow works end-to-end: signup, login, token refresh, logout.",
+      "MongoDB connection establishes without errors; data persists correctly.",
+      "Endpoints handle ASL translation data securely and efficiently.",
+      "Security best practices are followed (no plaintext secrets, proper CORS, input sanitization).",
+      "Error responses are user-friendly and logged appropriately.",
+      "corrections.json is created with fixes for any identified issues."
+    ],
+    "audit_report_path": "audits/phase-3/audit-report.md",
+    "bug_log_path": "audits/phase-3/bugs.json"
+  },
+  "bug_log_format": {
+    "id": "string",
+    "description": "string",
+    "severity": "low|med|high",
+    "status": "open|resolved",
+    "phase": 3
+  }
+}

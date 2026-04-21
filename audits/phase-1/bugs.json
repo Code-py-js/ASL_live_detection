@@ -1,0 +1,9 @@
+[
+  {
+    "id": "PHASE1-001",
+    "description": "flutter pub get failed due to symlink support requirements on Windows (Developer Mode / elevated privileges needed).",
+    "severity": "high",
+    "status": "resolved",
+    "phase": 1
+  }
+]

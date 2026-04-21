@@ -1,0 +1,72 @@
+[
+  {
+    "issue_id": "CONFIG-001",
+    "description": "Rate limiting may impact integration testing",
+    "correction": "For development/testing: Temporarily disable rate limiting by setting high thresholds in .env (API_RATE_LIMIT_MAX_REQUESTS=1000) or add test bypass middleware. For production: Keep current limits (5 auth/15min, 10 register/hour)",
+    "status": "pending",
+    "phase": 4
+  },
+  {
+    "issue_id": "DB-001",
+    "description": "In-memory database not suitable for production",
+    "correction": "Set USE_IN_MEMORY_DB=false in .env and provide valid MONGODB_URI. Verify MongoDB connection before deployment. Alternative: Configure MongoDB Atlas with proper authentication and IP whitelist",
+    "status": "pending",
+    "phase": 4
+  },
+  {
+    "issue_id": "AUTH-001",
+    "description": "JWT token expiry (7 days) requires client-side refresh handling",
+    "correction": "Implement token refresh mechanism in Flutter app. Catch 401 AUTH_INVALID_TOKEN errors and prompt re-login. Consider reducing JWT_EXPIRY to 24h for better security and implementing refresh tokens",
+    "status": "pending",
+    "phase": 4
+  },
+  {
+    "issue_id": "LOG-001",
+    "description": "Request logging creates large log files in production",
+    "correction": "Monitor logs/combined.log and logs/error.log disk usage. Implement log archival strategy (compress old logs). Consider reducing LOG_LEVEL to 'warn' in production. Set up log rotation policy (current: 5MB per file, 5 file retention)",
+    "status": "pending",
+    "phase": 4
+  },
+  {
+    "issue_id": "API-001",
+    "description": "Health check endpoint memory reporting may differ between environments",
+    "correction": "Use /api/v1/health for basic connectivity checks only. For production monitoring, implement comprehensive APM (Application Performance Monitoring). Monitor database connection readiness separately",
+    "status": "pending",
+    "phase": 4
+  },
+  {
+    "issue_id": "FRONTEND-001",
+    "description": "Flutter frontend needs backend API integration points",
+    "correction": "Connect Flutter app to backend at: 1) Auth: POST /api/v1/auth/register, /api/v1/auth/login. 2) Translations: POST /api/v1/translations (create), GET /api/v1/translations (retrieve). 3) Set Authorization header: 'Bearer {token}' for authenticated endpoints",
+    "status": "pending",
+    "phase": 4
+  },
+  {
+    "issue_id": "ML-001",
+    "description": "ML model integration with backend needs coordination",
+    "correction": "1) TensorFlow Lite inference runs locally in Flutter. 2) Send results to backend via POST /api/v1/translations. 3) Include confidence scores (0-1 range) in payload. 4) Verify XSS escaping; backend sanitizes input automatically",
+    "status": "pending",
+    "phase": 4
+  },
+  {
+    "issue_id": "TEST-001",
+    "description": "Jest test suite has token persistence issues",
+    "correction": "Use integration test script (test_sprint5_integration.js) instead of Jest for full E2E testing. Jest tests work for individual endpoint validation. For comprehensive testing: run script, then Jest with --forceExit flag to prevent hanging",
+    "status": "pending",
+    "phase": 4
+  },
+  {
+    "issue_id": "SEC-001",
+    "description": "XSS escaping may double-escape user content in some cases",
+    "correction": "Verify that frontend doesn't double-escape escaped content. When retrieving translations from API, content is already escaped; render as-is without additional escaping in Flutter",
+    "status": "pending",
+    "phase": 4
+  },
+  {
+    "issue_id": "PERF-001",
+    "description": "No caching mechanism for frequently accessed translations",
+    "correction": "Implement local caching in Flutter app for retrieved translations. On backend: Consider Redis caching layer for translation lookups. Current design: No caching; fresh query for each GET request",
+    "status": "pending",
+    "phase": 4
+  }
+]

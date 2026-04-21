@@ -1,0 +1,92 @@
+{
+  "phase": 3,
+  "title": "Backend API & Persistence - Execution Plan",
+  "overview": "Build Node.js/Express backend with MongoDB.",
+  "prerequisites": [
+    "Node.js and npm installed.",
+    "MongoDB running (local or Atlas).",
+    "Postman or curl for testing.",
+    "Git repository."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "description": "Scaffold backend/ with Express.",
+      "actions": [
+        "npm init, install express, mongoose, bcrypt, jsonwebtoken."
+      ],
+      "validation": "Project initialized.",
+      "error_handling": "Resolve npm install errors; check Node version."
+    },
+    {
+      "step": 2,
+      "description": "Set up MongoDB connection.",
+      "actions": [
+        "Create connection script, use Mongoose."
+      ],
+      "validation": "Connects successfully.",
+      "error_handling": "Check MongoDB URI; handle connection timeouts."
+    },
+    {
+      "step": 3,
+      "description": "Implement auth endpoints.",
+      "actions": [
+        "Routes: /register, /login, /logout with JWT."
+      ],
+      "validation": "Auth works.",
+      "error_handling": "Debug JWT signing; test with Postman."
+    },
+    {
+      "step": 4,
+      "description": "Create translation endpoints.",
+      "actions": [
+        "CRUD for translations, user profiles."
+      ],
+      "validation": "Endpoints functional.",
+      "error_handling": "Validate schemas; handle validation errors."
+    },
+    {
+      "step": 5,
+      "description": "Add security middleware.",
+      "actions": [
+        "CORS, validation, rate limiting."
+      ],
+      "validation": "Secure.",
+      "error_handling": "Test CORS policies; monitor rate limits."
+    },
+    {
+      "step": 6,
+      "description": "Test API.",
+      "actions": [
+        "Use Postman for requests."
+      ],
+      "validation": "All endpoints respond.",
+      "error_handling": "Log errors; fix response codes."
+    },
+    {
+      "step": 7,
+      "description": "Evaluate audit report and create corrections.json.",
+      "actions": [
+        "Read audits/phase-3/audit-report.md.",
+        "Identify potential issues from findings.",
+        "Create audits/phase-3/corrections.json with fixes for each issue."
+      ],
+      "validation": "corrections.json created with actionable fixes.",
+      "error_handling": "If no issues, create empty array; ensure JSON syntax."
+    }
+  ],
+  "bug_logging": "Log to audits/phase-3/bugs.json.",
+  "completion": "Write audit report to audits/phase-3/audit-report.md.",
+  "corrections_format": {
+    "file_path": "audits/phase-3/corrections.json",
+    "structure": [
+      {
+        "issue_id": "string (matches bug id or finding)",
+        "description": "string (issue summary)",
+        "correction": "string (step-by-step fix)",
+        "status": "pending|applied",
+        "phase": 3
+      }
+    ]
+  }
+}

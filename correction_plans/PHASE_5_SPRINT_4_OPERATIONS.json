@@ -1,0 +1,325 @@
+[
+  {
+    "issue_id": "AUTH-001",
+    "category": "Operational & Maintenance",
+    "severity": "🟡 MEDIUM",
+    "title": "JWT Token Refresh Mechanism",
+    "description": "JWT tokens have 7-day expiry without refresh. Users must re-login after expiry. Implement refresh tokens for seamless UX.",
+    "blocking_items": [
+      "Users interrupted after 7 days",
+      "No refresh token standard",
+      "Security risk with long expiry",
+      "Mobile app can't handle grace period"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Implement Refresh Token Generation",
+        "details": "Update backend/src/routes/auth.js login endpoint: 1) Generate short-lived access token (JWT, 15 min expiry). 2) Generate long-lived refresh token (stored in DB, 30 days expiry). 3) Return both tokens: { accessToken, refreshToken, expiresIn: 900 }"
+      },
+      {
+        "step": 2,
+        "task": "Create Token Refresh Endpoint",
+        "details": "Create POST /api/v1/auth/refresh: 1) Accepts refreshToken in body. 2) Validates token against DB record. 3) Checks expiry. 4) Generates new accessToken. 5) Returns { accessToken, expiresIn: 900 }"
+      },
+      {
+        "step": 3,
+        "task": "Update Middleware for Token Validation",
+        "details": "Modify backend/src/middleware/auth.js: 1) If token expired, return 401 with code 'TOKEN_EXPIRED'. 2) Include message: 'Please refresh token'. 3) Don't return 'AUTH_INVALID_TOKEN' for expired tokens (allows client to distinguish)"
+      },
+      {
+        "step": 4,
+        "task": "Implement Refresh in Flutter",
+        "details": "Update lib/services/api_service.dart: 1) Catch 401 TOKEN_EXPIRED response. 2) Automatically call POST /api/v1/auth/refresh with stored refreshToken. 3) Update stored accessToken with new token. 4) Retry original request with new token. 5) If refresh fails, redirect to login"
+      },
+      {
+        "step": 5,
+        "task": "Add Secure Token Storage",
+        "details": "Use flutter_secure_storage package: 1) Store refreshToken in device keychain/keystore (encrypted). 2) accessToken in memory (cleared on app close). 3) Never log tokens. 4) Clear on logout"
+      },
+      {
+        "step": 6,
+        "task": "Handle Refresh Token Rotation",
+        "details": "Optional: each refresh generates new refreshToken (rotation). 1) Invalidate old refresh token after issuing new. 2) Prevents token replay attacks. 3) DB tracks issued tokens, revokes old ones"
+      },
+      {
+        "step": 7,
+        "task": "Add Logout Endpoint",
+        "details": "Create POST /api/v1/auth/logout: 1) Invalidates refreshToken in DB (marks revoked). 2) Clears user session. 3) Deletes tokens from Flutter secure storage on client. 4) Returns success"
+      },
+      {
+        "step": 8,
+        "task": "Test Refresh Flow",
+        "details": "Create test scenario: 1) Login, get tokens. 2) Wait for accessToken to expire (manually set short expiry in test). 3) Make API call, trigger 401. 4) Automatic refresh triggered. 5) Verify original request succeeds with new token"
+      }
+    ],
+    "validation": "Refresh tokens generated and stored securely; automatic refresh works transparently; expired tokens handled gracefully; refresh endpoint available and working",
+    "error_handling": "If refresh fails: check refreshToken expiry (>30 days = revoked), check DB connection. If rotation fails: log error, skip rotation but don't fail refresh. Implement grace period (10 min) before forcing re-login",
+    "dependencies": ["flutter_secure_storage package", "Updated auth endpoints", "Database refresh token storage"],
+    "estimated_hours": 6,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "POST /api/v1/auth/refresh endpoint",
+      "Updated login endpoint with refresh token generation",
+      "Modified auth middleware with TOKEN_EXPIRED detection",
+      "lib/services/api_service.dart with auto-refresh logic",
+      "flutter_secure_storage integration",
+      "Logout endpoint that revokes tokens",
+      "Test for refresh token flow"
+    ]
+  },
+  {
+    "issue_id": "LOG-001",
+    "category": "Operational & Maintenance",
+    "severity": "🟡 MEDIUM",
+    "title": "Log File Management and Archival",
+    "description": "Request logging creates large log files. Need archival strategy and disk space management for production.",
+    "blocking_items": [
+      "Disk space consumed by logs",
+      "No log retention policy",
+      "Old logs not archived",
+      "Difficult to find logs from specific dates"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Configure Log Rotation",
+        "details": "Backend already has Winston log rotation (5MB per file, 5 file retention). Verify in backend/src/utils/logger.js: maxsize: 5242880 (5MB), maxFiles: 5. In production, increase retention: maxFiles: 30 (30 days if daily rotation)"
+      },
+      {
+        "step": 2,
+        "task": "Configure Daily Log Files",
+        "details": "Update Winston config: add daily rotation filename format using date package: 'logs/combined-%DATE%.log'. Creates separate log file per day, automatically rotates at midnight"
+      },
+      {
+        "step": 3,
+        "task": "Set Up Log Archival",
+        "details": "Create backend/scripts/archive_logs.js: 1) Find logs >30 days old. 2) Compress with gzip (.log.gz). 3) Upload to S3 or backup storage. 4) Delete local copy after confirming upload. 5) Schedule as cron job (daily at 2am)"
+      },
+      {
+        "step": 4,
+        "task": "Configure Environment-Based Log Level",
+        "details": "Update .env: LOG_LEVEL=info (dev, tracks all requests), LOG_LEVEL=warn (production, only warnings/errors). Test: in production, avoid verbose request logging; keep error logging"
+      },
+      {
+        "step": 5,
+        "task": "Add Log Monitoring",
+        "details": "Set up log monitoring: 1) Alert if error rate >1% in 5 min window. 2) Alert if disk usage on /logs partition >80%. 3) Alert on specific error patterns (DB connection failures, auth errors). Use ELK stack, Datadog, or app-specific monitoring"
+      },
+      {
+        "step": 6,
+        "task": "Create Log Access Policy",
+        "details": "Document: 1) Who can access logs (ops team). 2) How long retained (30 days hot, 1 year archived). 3) Where archived (S3 with encryption). 4) Audit trail for log access requests"
+      },
+      {
+        "step": 7,
+        "task": "Implement Request ID Tracking",
+        "details": "Add request ID to each request: 1) Generate UUID on API entry. 2) Include in all log lines for that request. 3) Client includes in error reports: 'Request ID: xxx'. 4) Ops team uses to correlate logs"
+      },
+      {
+        "step": 8,
+        "task": "Document Log Management",
+        "details": "Create LOG_MANAGEMENT.md: how to view logs, how to search for errors, how to request archived logs, retention policy, disk space expectations"
+      }
+    ],
+    "validation": "Log rotation working (verified daily files); archival automatic (>30 days compressed); monitoring alerts functional; log access policy documented",
+    "error_handling": "If disk fills: emergency script deletes oldest unarchived logs after alerting. If archive fails: logs retained locally with retry. If monitoring fails: silent, but alert issue filed",
+    "dependencies": ["Winston rotation configured", "S3 or backup storage access", "Cron job scheduling", "Monitoring tool (optional)"],
+    "estimated_hours": 4,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "Daily log rotation configured",
+      "backend/scripts/archive_logs.js automation",
+      "Log level environment configuration",
+      "Log monitoring rules set up",
+      "Request ID tracking in all logs",
+      "LOG_MANAGEMENT.md documentation"
+    ]
+  },
+  {
+    "issue_id": "SEC-001",
+    "category": "Operational & Maintenance",
+    "severity": "🟡 MEDIUM",
+    "title": "XSS Input Escaping Verification",
+    "description": "Verify that XSS escaping doesn't double-escape. Need to ensure backend escapes once, frontend renders safely without re-escaping.",
+    "blocking_items": [
+      "Risk of double-escaped content in UI",
+      "Text appears with escape characters visible",
+      "Inconsistent escaping strategies"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Document Escaping Strategy",
+        "details": "Create SECURITY_ESCAPING.md: 1) Backend escapes input on storage (validator.escape()). 2) Content retrieved already escaped. 3) Frontend renders as-is (no additional escaping). 4) Only escape if frontend-generated user input"
+      },
+      {
+        "step": 2,
+        "task": "Verify Backend Escaping",
+        "details": "Test backend escaping: POST /api/v1/translations with signText: '<script>alert(1)</script>'. Verify response has escaped value: '&lt;script&gt;alert(1)&lt;/script&gt;'. No double-escaping"
+      },
+      {
+        "step": 3,
+        "task": "Verify Flutter Rendering",
+        "details": "In Flutter, render escaped text directly using Text widget: Text(model.signText) or similar. Flutter automatically handles HTML entities for text display. DO NOT use html package to unescape"
+      },
+      {
+        "step": 4,
+        "task": "Create XSS Test Cases",
+        "details": "Add test cases for common XSS patterns: '<img src=x onerror=alert(1)>', '<svg onload=alert(1)>', '<iframe src=javascript:alert(1)>'. Verify all escaped and rendered safely"
+      },
+      {
+        "step": 5,
+        "task": "Add Content Security Policy Headers",
+        "details": "Update backend/src/middleware/security.js: add CSP headers (via Helmet): no unsafe-inline, no unsafe-eval. Restricts where scripts can run even if injected"
+      },
+      {
+        "step": 6,
+        "task": "Disable Flutter WebView Vulnerabilities",
+        "details": "If using WebView in Flutter: 1) Disable JavaScript by default. 2) Whitelist trusted domains. 3) Never load user input as HTML/JS. 4) Use flutter_inappwebview with security options"
+      },
+      {
+        "step": 7,
+        "task": "Security Audit",
+        "details": "Use automated tools: OWASP ZAP (scan backend), Flutter security scanner (analyze dependencies). Verify no XSS, SQL injection, CSRF vulnerabilities"
+      }
+    ],
+    "validation": "No double-escaped content in UI; XSS test cases pass (injected scripts not executed); CSP headers present; security scan clean",
+    "error_handling": "If double-escaping detected: identify source (backend or frontend), remove redundant escaping. If new vulnerabilities found: prioritize patch, notify users if exposed",
+    "dependencies": ["OWASP ZAP or similar security tool", "Updated security middleware"],
+    "estimated_hours": 4,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "SECURITY_ESCAPING.md documentation",
+      "XSS test cases (>10 patterns)",
+      "CSP headers configured",
+      "Security scan report",
+      "Vulnerability remediation (if any)"
+    ]
+  },
+  {
+    "issue_id": "PERF-001",
+    "category": "Operational & Maintenance",
+    "severity": "🟡 MEDIUM",
+    "title": "Translation Caching Strategy",
+    "description": "No caching mechanism. Implement local caching in Flutter and optional backend caching for performance.",
+    "blocking_items": [
+      "Repeated API calls for same translations",
+      "Slow response when offline",
+      "Unnecessary database queries"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Implement Local Caching in Flutter",
+        "details": "Use hive or shared_preferences package: 1) Cache translated values locally with key: {userId}_{signLanguageClass}. 2) On app startup, load cache. 3) Display cached results immediately. 4) Silently refresh from backend in background"
+      },
+      {
+        "step": 2,
+        "task": "Add Cache Invalidation",
+        "details": "Implement cache TTL: 1) Cache entries valid for 24 hours. 2) After 24 hours, mark stale but accessible (offline mode). 3) Refresh from backend on next online connection. 4) Manual refresh button: 'Sync latest translations'"
+      },
+      {
+        "step": 3,
+        "task": "Implement Sync Service",
+        "details": "Create lib/services/sync_service.dart: 1) On app launch, check for updates from backend. 2) Compare local cache version with server version. 3) Download new/updated translations incrementally. 4) Store sync timestamp for next sync"
+      },
+      {
+        "step": 4,
+        "task": "Add Backend Caching (Optional)",
+        "details": "Optional: implement Redis caching on backend: 1) Cache frequent translation queries (>5 requests/hour). 2) TTL: 1 hour. 3) Invalidate on POST /translations. 4) Monitor hit rate"
+      },
+      {
+        "step": 5,
+        "task": "Test Offline-First Mode",
+        "details": "Test scenario: 1) Load translations online (cache populated). 2) Go offline (disable network). 3) Open app, verify cached translations available. 4) Attempt POST (queued for sync). 5) Go online, verify queued items synced"
+      },
+      {
+        "step": 6,
+        "task": "Implement Sync Status UI",
+        "details": "Add UI indicators: 1) Loading spinner while syncing. 2) 'Offline mode' badge if offline. 3) 'Last synced: X minutes ago' timestamp. 4) Manual sync button. 5) Error message if sync fails"
+      }
+    ],
+    "validation": "Cached translations display instantly; offline mode functional; cache invalidates correctly; background sync works; UI shows sync status",
+    "error_handling": "If cache corrupted: clear and rebuild from backend. If sync fails: queue for retry, notify user. If storage full: LRU eviction of oldest entries",
+    "dependencies": ["hive or shared_preferences package", "Optional: Redis on backend"],
+    "estimated_hours": 6,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "lib/services/cache_service.dart (Hive/SharedPreferences integration)",
+      "lib/services/sync_service.dart (background sync)",
+      "Cache invalidation and TTL management",
+      "Offline-first mode fully functional",
+      "Sync status UI components"
+    ]
+  },
+  {
+    "issue_id": "API-001",
+    "category": "Operational & Maintenance",
+    "severity": "🟡 MEDIUM",
+    "title": "Health Check and Monitoring Enhancement",
+    "description": "Health check endpoint limited in scope. Need comprehensive monitoring for production readiness.",
+    "blocking_items": [
+      "Limited visibility into backend health",
+      "No proactive alerting",
+      "Database issues not detected",
+      "Performance degradation unnoticed"
+    ],
+    "correction_steps": [
+      {
+        "step": 1,
+        "task": "Enhance Health Check Endpoint",
+        "details": "Expand GET /api/v1/health response: 1) status (healthy, degraded, unhealthy). 2) timestamp (ISO-8601). 3) uptime (seconds). 4) database: { connected, latency_ms, collections_count }. 5) memory: { used_mb, total_mb, heap_percentage }. 6) version, environment, node_version"
+      },
+      {
+        "step": 2,
+        "task": "Add Detailed Health Checks",
+        "details": "Create GET /api/v1/health/full (requires admin): 1) Database queries: find user (latency), insert test doc (latency, rollback). 2) External services: ML model availability (if applicable). 3) File system: logs directory writable. 4) Cache: Redis connectivity (if used). 5) Response time <1 second"
+      },
+      {
+        "step": 3,
+        "task": "Set Up Monitoring Alerts",
+        "details": "Use monitoring tool (Datadog, New Relic, Prometheus): 1) Alert if health endpoint fails (5xx). 2) Alert if response time >1 second. 3) Alert if database latency >100ms. 4) Alert if memory usage >80%. 5) Alert if error rate >1% (errors per minute)"
+      },
+      {
+        "step": 4,
+        "task": "Implement Uptime Checks",
+        "details": "Use external monitoring service (UptimeRobot, Pingdom, StatusPage): 1) Ping health endpoint every 1 minute. 2) Alert if endpoint unreachable (3 consecutive failures). 3) Track uptime percentage. 4) Public status page showing API health"
+      },
+      {
+        "step": 5,
+        "task": "Add Metrics Collection",
+        "details": "Implement Prometheus metrics: 1) track request count by endpoint. 2) Track response time distribution. 3) Track database query count/latency. 4) Track error rate. 5) Expose at GET /metrics"
+      },
+      {
+        "step": 6,
+        "task": "Create Dashboards",
+        "details": "Set up monitoring dashboard (Grafana with Prometheus): 1) Graph: request rates, latencies, errors. 2) Graph: database performance. 3) Graph: memory, CPU. 4) Alerts summary. 5) Update frequency: real-time"
+      },
+      {
+        "step": 7,
+        "task": "Document Monitoring Setup",
+        "details": "Create MONITORING.md: 1) How to access health endpoints. 2) Expected response format. 3) Alert thresholds and escalation. 4) Dashboard URLs. 5) Incident response procedures"
+      }
+    ],
+    "validation": "Health endpoint returns comprehensive data; monitoring alerts functional; uptime tracked and alert on failures; dashboards showing real-time metrics",
+    "error_handling": "If health check slow: optimize database queries, profile middleware. If alerts noisy: adjust thresholds. If monitoring tool down: manual health checks",
+    "dependencies": ["Monitoring tool (Datadog, Prometheus, etc.)", "Uptime service", "Grafana (optional for dashboards)"],
+    "estimated_hours": 8,
+    "status": "pending",
+    "phase": 5,
+    "deliverables": [
+      "Enhanced GET /api/v1/health endpoint",
+      "GET /api/v1/health/full detailed endpoint",
+      "Monitoring alerts configured",
+      "Uptime tracking service set up",
+      "Prometheus metrics endpoint",
+      "Grafana dashboards",
+      "MONITORING.md documentation"
+    ]
+  }
+]

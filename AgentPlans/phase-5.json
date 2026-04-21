@@ -1,0 +1,47 @@
+{
+  "phase": 5,
+  "title": "Testing & CI Automation",
+  "goal": "Establish comprehensive automated testing suites and CI/CD pipeline to ensure quality, performance, and accessibility for the ASL translation app, preventing regressions and supporting continuous development.",
+  "scope": [
+    "Implement unit tests for Flutter (widgets, BLoC logic), backend (API routes, models), and ML (inference accuracy).",
+    "Add integration tests for end-to-end flows (auth, translation pipeline).",
+    "Include UI tests (e.g., Flutter integration tests) for responsive layout and animations.",
+    "Add accessibility tests for deaf users (screen reader compatibility, high contrast).",
+    "Set up performance tests for ML inference (FPS benchmarks) and backend (load testing).",
+    "Configure CI pipeline (GitHub Actions) to run builds, tests, linting (Flutter analyze, ESLint), and static analysis on pushes/PRs.",
+    "Add code coverage reporting and quality gates (e.g., minimum coverage thresholds)."
+  ],
+  "deliverables": [
+    "Test suites: unit (Jest/Mocha for backend, Flutter test), integration, UI, accessibility.",
+    "CI config (.github/workflows/) with jobs for build, test, lint, and deploy previews.",
+    "Performance benchmarks and coverage reports.",
+    "Documentation on running tests locally and interpreting CI results.",
+    "Audit report and bug log for this phase."
+  ],
+  "examples": {
+    "unit_test_backend": "const request = require('supertest'); describe('Auth', () => { it('should login', async () => { const res = await request(app).post('/api/auth/login').send({email, password}); expect(res.status).toBe(200); }); });",
+    "flutter_unit_test": "test('HomeBloc emits loaded state', () { bloc.add(LoadHomeEvent()); expectLater(bloc, emits(HomeLoadedState('message'))); });",
+    "ci_yaml": "name: CI\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - run: flutter test\n      - run: npm test",
+    "accessibility_test": "Use axe-core for web; for mobile, check contrast ratios manually."
+  },
+  "audit": {
+    "must_verify": [
+      "All test suites run successfully with high coverage (>80%).",
+      "CI pipeline triggers correctly and fails on regressions.",
+      "Linting/static analysis passes without major issues.",
+      "Performance tests meet targets (e.g., 60 FPS ML inference).",
+      "Accessibility features are tested and compliant.",
+      "Flaky tests or coverage gaps are documented and addressed.",
+      "corrections.json is created with fixes for any identified issues."
+    ],
+    "audit_report_path": "audits/phase-5/audit-report.md",
+    "bug_log_path": "audits/phase-5/bugs.json"
+  },
+  "bug_log_format": {
+    "id": "string",
+    "description": "string",
+    "severity": "low|med|high",
+    "status": "open|resolved",
+    "phase": 5
+  }
+}

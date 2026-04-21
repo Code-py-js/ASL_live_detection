@@ -1,0 +1,10 @@
+[
+  {
+    "id": "PHASE3-001",
+    "description": "MongoDB operations fail with 'Command find requires authentication' because the configured MongoDB instance requires credentials.",
+    "severity": "high",
+    "status": "fixed",
+    "resolution": "Configured backend to use in-memory MongoDB (mongodb-memory-server) when USE_IN_MEMORY_DB=true in .env. Auth endpoints now properly register and authenticate users with valid JWT tokens.",
+    "phase": 3
+  }
+]

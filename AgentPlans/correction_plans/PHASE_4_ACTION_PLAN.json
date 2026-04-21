@@ -1,0 +1,389 @@
+{
+  "phase": 4,
+  "title": "Phase 4: Implementation Plan - Critical Fixes for Backend Stability",
+  "startDate": "2026-03-18",
+  "overview": "Execute critical corrections from Phase 3 audit to improve backend security, reliability, and functionality before production deployment",
+  "phases": [
+    {
+      "id": "PHASE-4-SPRINT-1",
+      "name": "Sprint 1: Security & Auth Hardening",
+      "duration": "2-3 days",
+      "priority": "critical",
+      "tasks": [
+        {
+          "id": "TASK-1",
+          "title": "Add password complexity validation",
+          "correctionId": "AUTH-001-001",
+          "description": "Implement password strength requirements in register endpoint",
+          "acceptance_criteria": [
+            "Password must be minimum 8 characters",
+            "Password must contain uppercase, lowercase, number, special character",
+            "Weak passwords return 400 status with clear error message",
+            "Test with weak/strong passwords passes"
+          ],
+          "implementation_file": "backend/src/routes/auth.js",
+          "estimated_effort": "1 hour",
+          "dependencies": []
+        },
+        {
+          "id": "TASK-2",
+          "title": "Add auth-specific rate limiting",
+          "correctionId": "AUTH-001-006",
+          "description": "Implement stricter rate limits for login/register endpoints (5 attempts per 15 min)",
+          "acceptance_criteria": [
+            "Login limited to 5 attempts per 15 minutes per email address",
+            "Register limited to 10 attempts per hour per IP",
+            "Returns 429 status when limit exceeded",
+            "Rate limiting is bypassed for successful requests"
+          ],
+          "implementation_file": "backend/src/middleware/security.js",
+          "estimated_effort": "2 hours",
+          "dependencies": []
+        },
+        {
+          "id": "TASK-3",
+          "title": "Restrict CORS to allowed origins",
+          "correctionId": "AUTH-001-007",
+          "description": "Update CORS configuration to whitelist only trusted domains",
+          "acceptance_criteria": [
+            "CORS origin restricted to comma-separated list from .env",
+            "Requests from other origins rejected with CORS error",
+            "Test with allowed and disallowed origins passes"
+          ],
+          "implementation_file": "backend/src/middleware/security.js, backend/.env",
+          "estimated_effort": "1 hour",
+          "dependencies": []
+        }
+      ],
+      "completion_criteria": "All auth endpoints return 401/429 for invalid/rate-limited requests; security test suite passes"
+    },
+    {
+      "id": "PHASE-4-SPRINT-2",
+      "name": "Sprint 2: Input Validation & Error Handling",
+      "duration": "2-3 days",
+      "priority": "critical",
+      "tasks": [
+        {
+          "id": "TASK-4",
+          "title": "Add input validation to all routes",
+          "correctionId": "API-001-004",
+          "description": "Implement request validation using validator/joi library",
+          "acceptance_criteria": [
+            "All endpoint inputs validated before processing",
+            "Empty/null fields rejected with 400 status",
+            "Email format validated",
+            "Text fields sanitized to prevent XSS",
+            "Invalid request test suite passes"
+          ],
+          "implementation_file": "backend/src/routes/auth.js, backend/src/routes/translations.js, backend/src/middleware/validation.js",
+          "estimated_effort": "2 hours",
+          "dependencies": ["npm install validator or joi"]
+        },
+        {
+          "id": "TASK-5",
+          "title": "Add error handling to POST /translations",
+          "correctionId": "TRANS-001-001",
+          "description": "Wrap translation creation endpoint in try/catch with proper error responses",
+          "acceptance_criteria": [
+            "Route wrapped in try/catch block",
+            "Database errors return 500 with proper format",
+            "Validation errors return 400",
+            "Error test suite passes"
+          ],
+          "implementation_file": "backend/src/routes/translations.js",
+          "estimated_effort": "1 hour",
+          "dependencies": []
+        },
+        {
+          "id": "TASK-6",
+          "title": "Add confidence field validation",
+          "correctionId": "TRANS-001-002",
+          "description": "Ensure confidence values are between 0-1, reject invalid data",
+          "acceptance_criteria": [
+            "Schema validates confidence in range [0, 1]",
+            "Request validation rejects confidence outside range",
+            "Returns 400 for invalid values",
+            "Test suite passes"
+          ],
+          "implementation_file": "backend/src/models/Translation.js, backend/src/routes/translations.js",
+          "estimated_effort": "1 hour",
+          "dependencies": []
+        }
+      ],
+      "completion_criteria": "All endpoints return proper 400/500 status codes; invalid input test suite passes"
+    },
+    {
+      "id": "PHASE-4-SPRINT-3",
+      "name": "Sprint 3: API Standards & Documentation",
+      "duration": "2-3 days",
+      "priority": "important",
+      "tasks": [
+        {
+          "id": "TASK-7",
+          "title": "Standardize error response format",
+          "correctionId": "API-001-002",
+          "description": "Define and implement consistent error response schema across all endpoints",
+          "acceptance_criteria": [
+            "All errors return: { code: string, message: string, details?: object, timestamp: ISO8601 }",
+            "Error codes defined: AUTH_INVALID, VALIDATION_ERROR, DB_ERROR, etc.",
+            "Error handler middleware created",
+            "Existing endpoints updated to use new format"
+          ],
+          "implementation_file": "backend/src/middleware/errorHandler.js",
+          "estimated_effort": "2 hours",
+          "dependencies": []
+        },
+        {
+          "id": "TASK-8",
+          "title": "Add API versioning to routes",
+          "correctionId": "API-001-001",
+          "description": "Update all routes to use /api/v1/ prefix for future compatibility",
+          "acceptance_criteria": [
+            "All routes prefixed with /api/v1/",
+            "Health endpoint accessible at /api/v1/health",
+            "Existing tests updated to use v1 routes",
+            "Version can be easily updated when v2 needed"
+          ],
+          "implementation_file": "backend/src/index.js, backend/src/routes/*",
+          "estimated_effort": "1 hour",
+          "dependencies": []
+        },
+        {
+          "id": "TASK-9",
+          "title": "Set up API documentation",
+          "correctionId": "API-001-005",
+          "description": "Generate Swagger/OpenAPI docs for all endpoints",
+          "acceptance_criteria": [
+            "Swagger UI available at /api/docs",
+            "All endpoints documented with request/response examples",
+            "Schema definitions for User, Translation, Auth models",
+            "Error codes documented"
+          ],
+          "implementation_file": "backend/src/docs/swagger.js, backend/src/index.js",
+          "estimated_effort": "3 hours",
+          "dependencies": ["npm install swagger-jsdoc swagger-ui-express"]
+        }
+      ],
+      "completion_criteria": "Error format standardized; routes versioned; docs accessible at /api/docs"
+    },
+    {
+      "id": "PHASE-4-SPRINT-4",
+      "name": "Sprint 4: Configuration & Logging",
+      "duration": "1-2 days",
+      "priority": "important",
+      "tasks": [
+        {
+          "id": "TASK-10",
+          "title": "Externalize hardcoded configuration",
+          "correctionId": "CONFIG-001-001",
+          "description": "Move all hardcoded values to environment variables",
+          "acceptance_criteria": [
+            "All config moved to .env: PORT, JWT_EXPIRY, LOG_LEVEL, API_RATE_LIMIT",
+            ".env.example created with all variables and descriptions",
+            "Config loaded from .env at startup",
+            "README documents all config variables"
+          ],
+          "implementation_file": "backend/src/config.js, backend/.env, backend/.env.example, backend/README.md",
+          "estimated_effort": "1 hour",
+          "dependencies": []
+        },
+        {
+          "id": "TASK-11",
+          "title": "Add startup environment validation",
+          "correctionId": "CONFIG-001-002",
+          "description": "Validate required env vars exist at startup; fail fast with clear errors",
+          "acceptance_criteria": [
+            "Server validates JWT_SECRET, MONGODB_URI at startup",
+            "Clear error message if required var missing",
+            "Process exits with code 1 on validation failure",
+            "Startup logs show all resolved config values"
+          ],
+          "implementation_file": "backend/src/config.js, backend/src/index.js",
+          "estimated_effort": "1 hour",
+          "dependencies": []
+        },
+        {
+          "id": "TASK-12",
+          "title": "Add comprehensive request/response logging",
+          "correctionId": "API-001-007",
+          "description": "Log all requests with timestamp, method, path, user, status, duration",
+          "acceptance_criteria": [
+            "Every request logged: timestamp, method, path, userId, status, duration",
+            "Errors logged with full stack trace",
+            "Logs rotated daily and archived",
+            "Logs searchable for debugging"
+          ],
+          "implementation_file": "backend/src/middleware/logger.js, backend/src/index.js",
+          "estimated_effort": "2 hours",
+          "dependencies": ["npm install winston"]
+        }
+      ],
+      "completion_criteria": "Config fully externalized; startup validates environment; logging captures all requests"
+    },
+    {
+      "id": "PHASE-4-SPRINT-5",
+      "name": "Sprint 5: Quality Assurance & Testing",
+      "duration": "2-3 days",
+      "priority": "important",
+      "tasks": [
+        {
+          "id": "TASK-13",
+          "title": "Create comprehensive test suite",
+          "correctionId": "TEST-001-001",
+          "description": "Expand test coverage beyond happy-path to include error cases and edge conditions",
+          "acceptance_criteria": [
+            "Tests for invalid inputs: empty email, weak password, null fields",
+            "Tests for error cases: duplicate email, wrong password, invalid token",
+            "Tests for boundary conditions: max/min field lengths",
+            "All error codes and status codes verified",
+            "Test coverage > 80% for auth and translation endpoints"
+          ],
+          "implementation_file": "backend/tests/auth.test.js, backend/tests/translations.test.js, backend/package.json",
+          "estimated_effort": "4 hours",
+          "dependencies": ["npm install jest supertest --save-dev"]
+        },
+        {
+          "id": "TASK-14",
+          "title": "Verify all critical issues fixed",
+          "correctionId": "ALL-CRITICAL",
+          "description": "Integration test: verify the auth → translation complete workflow works",
+          "acceptance_criteria": [
+            "Can register with valid credentials",
+            "Can login with correct credentials",
+            "JWT token received and properly formatted",
+            "Can create translation with valid token",
+            "Can retrieve translation with valid token",
+            "Cannot access without/with invalid token",
+            "Rate limiting blocks repeated auth attempts"
+          ],
+          "implementation_file": "backend/tests/integration.test.js",
+          "estimated_effort": "2 hours",
+          "dependencies": []
+        }
+      ],
+      "completion_criteria": "Test suite passes; integration test confirms auth/translation workflow; critical fixes verified"
+    }
+  ],
+  "implementation_checklist": [
+    {
+      "sprint": "SPRINT-1",
+      "item": "Password complexity validation",
+      "status": "pending",
+      "estimated_hours": 1
+    },
+    {
+      "sprint": "SPRINT-1",
+      "item": "Auth-specific rate limiting",
+      "status": "pending",
+      "estimated_hours": 2
+    },
+    {
+      "sprint": "SPRINT-1",
+      "item": "CORS origin restriction",
+      "status": "pending",
+      "estimated_hours": 1
+    },
+    {
+      "sprint": "SPRINT-2",
+      "item": "Input validation on all routes",
+      "status": "pending",
+      "estimated_hours": 2
+    },
+    {
+      "sprint": "SPRINT-2",
+      "item": "Error handling for /translations POST",
+      "status": "pending",
+      "estimated_hours": 1
+    },
+    {
+      "sprint": "SPRINT-2",
+      "item": "Confidence field validation",
+      "status": "pending",
+      "estimated_hours": 1
+    },
+    {
+      "sprint": "SPRINT-3",
+      "item": "Standardized error format",
+      "status": "pending",
+      "estimated_hours": 2
+    },
+    {
+      "sprint": "SPRINT-3",
+      "item": "API versioning (/api/v1/)",
+      "status": "pending",
+      "estimated_hours": 1
+    },
+    {
+      "sprint": "SPRINT-3",
+      "item": "Swagger API documentation",
+      "status": "pending",
+      "estimated_hours": 3
+    },
+    {
+      "sprint": "SPRINT-4",
+      "item": "Externalize configuration",
+      "status": "pending",
+      "estimated_hours": 1
+    },
+    {
+      "sprint": "SPRINT-4",
+      "item": "Environment validation at startup",
+      "status": "pending",
+      "estimated_hours": 1
+    },
+    {
+      "sprint": "SPRINT-4",
+      "item": "Request/response logging",
+      "status": "pending",
+      "estimated_hours": 2
+    },
+    {
+      "sprint": "SPRINT-5",
+      "item": "Comprehensive test suite",
+      "status": "pending",
+      "estimated_hours": 4
+    },
+    {
+      "sprint": "SPRINT-5",
+      "item": "Integration test verification",
+      "status": "pending",
+      "estimated_hours": 2
+    }
+  ],
+  "total_estimated_effort": "27 hours",
+  "estimated_timeline": "1-2 weeks (5 sprints of 1-2 days each)",
+  "success_criteria": [
+    "All critical security issues fixed (password validation, rate limiting, CORS, input validation)",
+    "All endpoints return consistent error responses with proper status codes",
+    "API documented and versioned",
+    "Request/response logging captures all activity",
+    "Test suite passes with >80% coverage of critical paths",
+    "Integration test verifies auth → translation workflow works end-to-end",
+    "Backend ready for Phase 5 (Flutter app integration testing)"
+  ],
+  "risk_mitigation": [
+    {
+      "risk": "Rate limiting too strict, blocks legitimate users",
+      "mitigation": "Start with generous limits (10/15min), reduce if abuse detected"
+    },
+    {
+      "risk": "Logging overhead impacts performance",
+      "mitigation": "Use async logging, batch writes to reduce I/O impact"
+    },
+    {
+      "risk": "Test suite too slow, slows down development",
+      "mitigation": "Run only modified test files during dev, full suite in CI/CD"
+    },
+    {
+      "risk": "Breaking changes in API versioning",
+      "mitigation": "Keep /api/v1/ stable, only improve in patch versions"
+    }
+  ],
+  "next_steps": [
+    "Review this plan with the team",
+    "Assign team members to each sprint",
+    "Start SPRINT-1 (Security & Auth Hardening)",
+    "After each sprint, run test suite and verify corrections are working",
+    "Update this plan based on any blockers or scope changes"
+  ]
+}
