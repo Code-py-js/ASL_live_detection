@@ -41,6 +41,9 @@ class ApiService {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
+        // Store the token immediately, no verification step needed
+        await _secureStorage.write(key: _accessTokenKey, value: data['token']);
+        _accessToken = data['token'];
         return data;
       } else {
         throw ApiException(

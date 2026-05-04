@@ -22,27 +22,20 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ code: 'DUPLICATE_ENTRY', message: 'Email already registered.' });
     }
 
-    // Generate 6-digit verification code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const verificationCodeExpires = new Date(Date.now() + 3600000); // 1 hour
-
     const passwordHash = await bcrypt.hash(password, bcryptRounds || 10);
     const user = await User.create({ 
       email, 
       passwordHash, 
       nickname: nickname || email.split('@')[0],
-      verificationCode,
-      verificationCodeExpires,
-      isVerified: false
+      isVerified: true,        // ← auto-verified
     });
 
-    // Send verification email
-    sendVerificationEmail(user.email, user.nickname, verificationCode).catch(console.error);
+    // Return token immediately, just like login does
+    const token = jwt.sign({ userId: user._id, email: user.email }, jwtSecret, { expiresIn: jwtExpiry });
 
     res.status(201).json({ 
-      message: 'User created. Please verify your email.',
-      email: user.email,
-      nickname: user.nickname
+      token,
+      user: { id: user._id, email: user.email, nickname: user.nickname }
     });
   } catch (err) {
     console.error('Register error:', err);

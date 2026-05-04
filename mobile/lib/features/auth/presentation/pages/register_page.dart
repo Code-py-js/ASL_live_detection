@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/api_service.dart';
 import 'verification_page.dart';
 import 'login_page.dart';
+import '../../../home/presentation/pages/home_page.dart';
 
 class RegisterPage extends StatefulWidget {
   static const routeName = '/register';
@@ -49,20 +50,18 @@ class _RegisterPageState extends State<RegisterPage> {
         password: password,
         nickname: nickname,
       );
-      
+
       if (mounted) {
-        // Navigate to verification page instead of home page
-        Navigator.pushReplacement(
+        Navigator.pushNamedAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => VerificationPage(email: email),
-          ),
+          HomePage.routeName,
+              (route) => false, // clears back stack so user can't go back to register
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text(e.toString())),
         );
       }
     } finally {
