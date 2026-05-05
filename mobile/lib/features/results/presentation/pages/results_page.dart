@@ -9,7 +9,7 @@ class ResultsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Results'),
+        title: const Text('History'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

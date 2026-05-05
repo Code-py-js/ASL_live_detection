@@ -68,12 +68,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   mainAxisSpacing: 12,
                   children: [
                     _FeatureCard(
-                      label: 'Camera',
+                      label: 'ASL Translator',
                       icon: Icons.camera_alt,
                       onTap: () => Navigator.pushNamed(context, '/camera'),
                     ),
                     _FeatureCard(
-                      label: 'Results',
+                      label: 'History',
                       icon: Icons.text_snippet,
                       onTap: () => Navigator.pushNamed(context, '/results'),
                     ),
